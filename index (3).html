@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ส่งงาน Influencer</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f3f4f6; }
+    .thumbnail { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 2px solid #e5e7eb; }
+    .upload-item { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .upload-status { font-size: 12px; }
+    .upload-status.uploading { color: #f59e0b; }
+    .upload-status.done      { color: #10b981; }
+    .upload-status.error     { color: #ef4444; }
+    #progress-bar { transition: width 0.3s ease; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- ========== STEP 0: Loading ========== -->
+<div id="step-0" class="flex flex-col items-center justify-center min-h-screen">
+  <div class="animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent mb-4"></div>
+  <p class="text-gray-500 text-sm">กำลังโหลด...</p>
+</div>
+
+<!-- ========== STEP 1: กรอกข้อมูล ========== -->
+<div id="step-1" class="hidden max-w-md mx-auto p-4">
+  <div id="step1-header-img-wrap" class="mb-4"></div>
+  <h1 class="text-xl font-bold text-center text-green-600 mb-6">กรอกข้อมูล Influencer</h1>
+  <div class="bg-white rounded-2xl shadow p-5 space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อเล่น <span class="text-red-500">*</span></label>
+      <input id="nickname" type="text" placeholder="ชื่อเล่น"
+        class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">@username TikTok <span class="text-red-500">*</span></label>
+      <input id="tiktokUsername" type="text" placeholder="@username"
+        class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์ติดต่อ <span class="text-red-500">*</span></label>
+      <input id="phone" type="tel" placeholder="0812345678"
+        class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
+    </div>
+    <div id="step1-error" class="hidden text-red-500 text-sm text-center"></div>
+    <button id="step1-submit" onclick="submitStep1()"
+      class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition">
+      ถัดไป →
+    </button>
+  </div>
+</div>
+
+<!-- ========== STEP 2: อัพโหลดชิ้นงาน ========== -->
+<div id="step-2" class="hidden max-w-md mx-auto p-4">
+  <!-- Progress bar -->
+  <div class="bg-white rounded-2xl shadow p-4 mb-4 sticky top-2 z-10">
+    <div class="flex justify-between text-sm text-gray-600 mb-1">
+      <span>ความคืบหน้า</span>
+      <span id="progress-text">0%</span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-3">
+      <div id="progress-bar" class="bg-green-500 h-3 rounded-full" style="width:0%"></div>
+    </div>
+  </div>
+
+  <h1 class="text-xl font-bold text-center text-green-600 mb-4">อัพโหลดชิ้นงาน</h1>
+
+  <div class="space-y-4">
+
+    <!-- 1. ชิ้นงานสมบูรณ์ -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">1. ชิ้นงานสมบูรณ์ <span class="text-red-500">*</span></label>
+      <p class="text-xs text-gray-400 mb-2">รูปภาพ / วิดีโอ (หลายไฟล์)</p>
+      <input id="input-final" type="file" multiple accept="image/*,video/*"
+        class="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-green-100 file:text-green-700"
+        onchange="handleFileSelect(this, 'final', 'finalFolderId')" />
+      <div id="thumbs-final" class="flex flex-wrap gap-2 mt-2"></div>
+    </div>
+
+    <!-- 2. ฟุตเทจ -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">2. ฟุตเทจ <span class="text-red-500">*</span></label>
+      <p class="text-xs text-gray-400 mb-2">รูปภาพ / วิดีโอ (หลายไฟล์)</p>
+      <input id="input-footage" type="file" multiple accept="image/*,video/*"
+        class="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-green-100 file:text-green-700"
+        onchange="handleFileSelect(this, 'footage', 'footageFolderId')" />
+      <div id="thumbs-footage" class="flex flex-wrap gap-2 mt-2"></div>
+    </div>
+
+    <!-- 3. สำเนาบัตรประชาชน + Bookbank -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">3. สำเนาบัตรประชาชน + สำเนา Bookbank <span class="text-red-500">*</span></label>
+      <p class="text-xs text-gray-400 mb-2">ไฟล์รูปภาพเท่านั้น (หลายไฟล์)</p>
+      <input id="input-docs" type="file" multiple accept="image/*"
+        class="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-green-100 file:text-green-700"
+        onchange="handleFileSelect(this, 'docs', 'folderId')" />
+      <div id="thumbs-docs" class="flex flex-wrap gap-2 mt-2"></div>
+    </div>
+
+    <!-- 4. ลิงก์โพสงาน ช่องที่ 1 -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">4. ลิงก์โพสงาน ช่องที่ 1 <span class="text-red-500">*</span></label>
+      <select id="post1Platform"
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+        onchange="updateProgress()">
+        <option value="">-- เลือกช่องทาง --</option>
+      </select>
+      <input id="post1Url" type="url" placeholder="https://..."
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+        oninput="updateProgress()" />
+    </div>
+
+    <!-- 5. ลิงก์โพสงาน ช่องที่ 2 -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">5. ลิงก์โพสงาน ช่องที่ 2</label>
+      <select id="post2Platform"
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 mb-2 focus:outline-none focus:ring-2 focus:ring-green-400">
+        <option value="">-- เลือกช่องทาง --</option>
+      </select>
+      <input id="post2Url" type="url" placeholder="https://..."
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" />
+    </div>
+
+    <!-- 6. ธนาคาร -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">6. ธนาคาร <span class="text-red-500">*</span></label>
+      <select id="bankName"
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+        onchange="updateProgress()">
+        <option value="">-- เลือกธนาคาร --</option>
+      </select>
+    </div>
+
+    <!-- 7. เลขบัญชี -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">7. เลขบัญชี <span class="text-red-500">*</span></label>
+      <input id="bankAccount" type="number" placeholder="กรอกเลขบัญชี"
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+        oninput="updateProgress()" />
+    </div>
+
+    <!-- 8. ชื่อเจ้าบัญชี -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">8. ชื่อเจ้าบัญชี <span class="text-red-500">*</span></label>
+      <input id="accountName" type="text" placeholder="ชื่อ-นามสกุล"
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+        oninput="updateProgress()" />
+    </div>
+
+    <!-- 9. เจนโค้ด 90 วัน -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">9. เจนโค้ด 90 วัน <span class="text-red-500">*</span></label>
+      <input id="genCode" type="text" placeholder="รหัส..."
+        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+        oninput="updateProgress()" />
+    </div>
+
+    <!-- 10. ภาพ Stat 7 วัน -->
+    <div class="bg-white rounded-2xl shadow p-4">
+      <label class="block font-semibold text-gray-800 mb-2">10. ภาพ Stat 7 วัน <span class="text-red-500">*</span></label>
+      <p class="text-xs text-gray-400 mb-2">ไฟล์รูปภาพเท่านั้น (หลายไฟล์)</p>
+      <input id="input-stat" type="file" multiple accept="image/*"
+        class="w-full text-sm text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:bg-green-100 file:text-green-700"
+        onchange="handleFileSelect(this, 'stat', 'statFolderId')" />
+      <div id="thumbs-stat" class="flex flex-wrap gap-2 mt-2"></div>
+    </div>
+
+  </div>
+
+  <div id="step2-error" class="hidden text-red-500 text-sm text-center mt-3"></div>
+
+  <button id="step2-submit" onclick="submitStep2()"
+    class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition mt-5 mb-8">
+    ส่งงาน ✅
+  </button>
+</div>
+
+<!-- ========== STEP 3: สำเร็จ ========== -->
+<div id="step-3" class="hidden flex flex-col items-center justify-center min-h-screen max-w-md mx-auto p-4">
+  <div class="bg-white rounded-2xl shadow p-8 text-center w-full">
+    <div class="text-6xl mb-4">🎉</div>
+    <div id="success-text" class="text-gray-700 mb-4 whitespace-pre-line"></div>
+    <p id="creator-tag-display" class="font-bold text-green-600 text-lg mb-2"></p>
+    <p class="text-sm text-gray-500 mb-6">ติดต่อสอบถามข้อมูลเพิ่มเติมได้ที่แอดมินที่ท่านประสานงาน</p>
+    <button onclick="closeLiff()"
+      class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 rounded-xl transition">
+      ปิดหน้าต่าง
+    </button>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+const GAS_URL = 'GAS_WEB_APP_URL';
+
+// ===== STATE =====
+let appConfig = {};
+let lineProfile = {};
+let influencerData = {}; // folderId, finalFolderId, footageFolderId, statFolderId, creatorTag, rowIndex
+
+// Upload tracking per field: { urls: [], pendingCount: 0 }
+const uploadState = {
+  final:   { urls: [], pendingCount: 0 },
+  footage: { urls: [], pendingCount: 0 },
+  docs:    { urls: [], pendingCount: 0 },
+  stat:    { urls: [], pendingCount: 0 }
+};
+
+// ===== GAS API =====
+async function gasPost(payload) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+// ===== STEP SWITCHER =====
+function showStep(n) {
+  [0,1,2,3].forEach(i => {
+    const el = document.getElementById('step-' + i);
+    if (el) el.classList.toggle('hidden', i !== n);
+  });
+}
+
+// ===== INIT =====
+async function init() {
+  try {
+    // Init LIFF
+    const liffId = await getLiffId();
+    await liff.init({ liffId });
+
+    if (!liff.isLoggedIn()) {
+      liff.login({ redirectUri: location.href });
+      return;
+    }
+
+    // Get config
+    const cfgRes = await gasPost({ action: 'getConfig' });
+    if (!cfgRes.success) throw new Error('โหลด config ไม่สำเร็จ');
+    appConfig = cfgRes.config;
+
+    // Get LINE profile
+    lineProfile = await liff.getProfile();
+
+    // Log
+    await gasPost({
+      action: 'log',
+      lineId: lineProfile.userId,
+      lineName: lineProfile.displayName,
+      linePhoto: lineProfile.pictureUrl
+    });
+
+    // Load dropdowns
+    await Promise.all([loadDropdown('Social', 'post1Platform'), loadDropdown('Social', 'post2Platform'), loadDropdown('ธนาคาร', 'bankName')]);
+
+    // Header image
+    if (appConfig.header_image_url) {
+      const wrap = document.getElementById('step1-header-img-wrap');
+      wrap.innerHTML = `<img src="${appConfig.header_image_url}" class="w-full rounded-xl object-cover" style="max-height:180px" />`;
+    }
+
+    showStep(1);
+  } catch (err) {
+    document.getElementById('step-0').innerHTML =
+      `<div class="text-center p-8"><p class="text-red-500 font-semibold">เกิดข้อผิดพลาด</p><p class="text-sm text-gray-500 mt-2">${err.message}</p></div>`;
+  }
+}
+
+// Get LIFF ID — from config sheet if already loaded, else bootstrap fetch
+async function getLiffId() {
+  // Try to read liff_id from a meta tag or environment — here we just fetch config first
+  // Since we need liff_id before liff.init, we do a pre-fetch
+  try {
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getConfig' }) });
+    const data = await res.json();
+    if (data.success && data.config.liff_id) return data.config.liff_id;
+  } catch(e) {}
+  throw new Error('ไม่พบ liff_id ใน config');
+}
+
+async function loadDropdown(sheetName, selectId) {
+  try {
+    const res = await gasPost({ action: 'getDropdown', sheetName });
+    if (res.success) {
+      const sel = document.getElementById(selectId);
+      res.values.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v; opt.textContent = v;
+        sel.appendChild(opt);
+      });
+    }
+  } catch(e) {}
+}
+
+// ===== STEP 1 SUBMIT =====
+async function submitStep1() {
+  const nickname = document.getElementById('nickname').value.trim();
+  const tiktokUsername = document.getElementById('tiktokUsername').value.trim().replace(/^@/, '');
+  const phone = document.getElementById('phone').value.trim();
+  const errEl = document.getElementById('step1-error');
+
+  if (!nickname || !tiktokUsername || !phone) {
+    errEl.textContent = 'กรุณากรอกข้อมูลให้ครบทุกช่อง';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  errEl.classList.add('hidden');
+
+  const btn = document.getElementById('step1-submit');
+  btn.disabled = true;
+  btn.textContent = 'กำลังบันทึก...';
+
+  try {
+    const res = await gasPost({
+      action: 'saveInfluencer',
+      lineId: lineProfile.userId,
+      lineName: lineProfile.displayName,
+      linePhoto: lineProfile.pictureUrl || '',
+      nickname,
+      tiktokUsername,
+      phone
+    });
+
+    if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
+
+    influencerData = {
+      folderId:       res.folderId,
+      finalFolderId:  res.finalFolderId,
+      footageFolderId: res.footageFolderId,
+      statFolderId:   res.statFolderId,
+      creatorTag:     res.creatorTag,
+      rowIndex:       res.rowIndex
+    };
+
+    showStep(2);
+    updateProgress();
+  } catch (err) {
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = 'ถัดไป →';
+  }
+}
+
+// ===== FILE UPLOAD =====
+async function handleFileSelect(input, field, folderKey) {
+  const files = Array.from(input.files);
+  const thumbContainer = document.getElementById('thumbs-' + field);
+  const folderId = influencerData[folderKey];
+  const MAX_SIZE = 40 * 1024 * 1024; // 40 MB
+
+  for (const file of files) {
+    if (file.size > MAX_SIZE) {
+      alert(`ไฟล์ "${file.name}" มีขนาดเกิน 40MB กรุณาเลือกไฟล์ที่เล็กกว่านี้`);
+      continue;
+    }
+
+    // Show thumbnail immediately
+    const localUrl = URL.createObjectURL(file);
+    const isImage = file.type.startsWith('image/');
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex flex-col items-center';
+
+    if (isImage) {
+      const img = document.createElement('img');
+      img.src = localUrl;
+      img.className = 'thumbnail';
+      wrapper.appendChild(img);
+    } else {
+      const icon = document.createElement('div');
+      icon.className = 'thumbnail flex items-center justify-center bg-gray-100 text-gray-500 text-xs text-center p-1';
+      icon.textContent = file.name.substring(0, 15);
+      wrapper.appendChild(icon);
+    }
+
+    const status = document.createElement('span');
+    status.className = 'upload-status uploading';
+    status.textContent = 'กำลังอัพโหลด...';
+    wrapper.appendChild(status);
+    thumbContainer.appendChild(wrapper);
+
+    // Track pending
+    uploadState[field].pendingCount++;
+    updateProgress();
+
+    // Upload in background
+    uploadFileToGAS(file, folderId, field, status);
+  }
+}
+
+async function uploadFileToGAS(file, folderId, field, statusEl) {
+  try {
+    const base64Data = await fileToBase64(file);
+    const res = await gasPost({
+      action: 'uploadFile',
+      folderId,
+      fileName: file.name,
+      mimeType: file.type,
+      base64Data
+    });
+
+    uploadState[field].pendingCount--;
+    if (res.success) {
+      uploadState[field].urls.push(res.driveUrl);
+      statusEl.className = 'upload-status done';
+      statusEl.textContent = '✓ อัพโหลดสำเร็จ';
+    } else {
+      throw new Error(res.error || 'ล้มเหลว');
+    }
+  } catch (err) {
+    uploadState[field].pendingCount--;
+    statusEl.className = 'upload-status error';
+    statusEl.textContent = '✗ ' + err.message;
+  }
+  updateProgress();
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Remove data URL prefix
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== PROGRESS =====
+function updateProgress() {
+  // Required fields: final, footage, docs, post1Platform+post1Url, bankName, bankAccount, accountName, genCode, stat
+  // Total = 9 required groups
+  const checks = [
+    uploadState.final.urls.length > 0,
+    uploadState.footage.urls.length > 0,
+    uploadState.docs.urls.length > 0,
+    (document.getElementById('post1Platform').value && document.getElementById('post1Url').value),
+    !!document.getElementById('bankName').value,
+    !!document.getElementById('bankAccount').value.trim(),
+    !!document.getElementById('accountName').value.trim(),
+    !!document.getElementById('genCode').value.trim(),
+    uploadState.stat.urls.length > 0
+  ];
+
+  const done = checks.filter(Boolean).length;
+  const total = checks.length;
+  const pct = Math.round((done / total) * 100);
+
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct + '%';
+}
+
+// ===== STEP 2 SUBMIT =====
+async function submitStep2() {
+  const errEl = document.getElementById('step2-error');
+  errEl.classList.add('hidden');
+
+  // Check pending uploads
+  const totalPending = Object.values(uploadState).reduce((s, v) => s + v.pendingCount, 0);
+  if (totalPending > 0) {
+    errEl.textContent = 'รอการอัพโหลดไฟล์ให้เสร็จก่อนส่งงาน';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // Validate required
+  const post1Platform = document.getElementById('post1Platform').value;
+  const post1Url = document.getElementById('post1Url').value.trim();
+  const bankName = document.getElementById('bankName').value;
+  const bankAccount = document.getElementById('bankAccount').value.trim();
+  const accountName = document.getElementById('accountName').value.trim();
+  const genCode = document.getElementById('genCode').value.trim();
+
+  if (uploadState.final.urls.length === 0 || uploadState.footage.urls.length === 0 ||
+      uploadState.docs.urls.length === 0 || uploadState.stat.urls.length === 0) {
+    errEl.textContent = 'กรุณาอัพโหลดไฟล์ในทุกหมวดให้ครบ';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  if (!post1Platform || !post1Url || !bankName || !bankAccount || !accountName || !genCode) {
+    errEl.textContent = 'กรุณากรอกข้อมูลให้ครบทุกช่องที่จำเป็น';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const btn = document.getElementById('step2-submit');
+  btn.disabled = true;
+  btn.textContent = 'กำลังส่งงาน...';
+
+  try {
+    const res = await gasPost({
+      action: 'submitWork',
+      lineId: lineProfile.userId,
+      docUrls: uploadState.docs.urls.join(','),
+      bankName,
+      bankAccount,
+      accountName,
+      genCode,
+      statUrls: uploadState.stat.urls.join(','),
+      post1Platform,
+      post1Url,
+      post2Platform: document.getElementById('post2Platform').value,
+      post2Url: document.getElementById('post2Url').value.trim()
+    });
+
+    if (!res.success) throw new Error(res.error || 'ส่งงานไม่สำเร็จ');
+
+    // Show success step
+    document.getElementById('success-text').textContent = appConfig.submit_success_text || 'ส่งงานสำเร็จเรียบร้อย!';
+    document.getElementById('creator-tag-display').textContent = 'รหัสอ้างอิง: ' + influencerData.creatorTag;
+    showStep(3);
+  } catch (err) {
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = 'ส่งงาน ✅';
+  }
+}
+
+// ===== CLOSE LIFF =====
+function closeLiff() {
+  try { liff.closeWindow(); } catch(e) { window.close(); }
+}
+
+// ===== START =====
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
