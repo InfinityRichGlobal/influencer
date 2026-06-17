@@ -203,7 +203,7 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <p id="success-text" style="font-size:14px;color:#555;line-height:1.6;margin-bottom:8px"></p>
     <div id="creator-ref" class="success-ref"></div>
     <p style="font-size:12px;color:#aaa;margin:8px 0 16px">ติดต่อสอบถามได้ที่แอดมินที่ท่านประสานงาน</p>
-    <button class="btn-primary" style="margin-top:0" onclick="doShare()">📤 แชร์ให้เพื่อน</button>
+    <button id="btn-share" class="btn-primary" style="margin-top:0" onclick="doShare()">📤 แชร์ให้เพื่อน</button>
     <button class="btn-secondary" onclick="closeLiff()">ปิดหน้าต่าง</button>
   </div>
 </div>
@@ -357,7 +357,7 @@ function processFile(file, field, folderId, grid) {
 
 // ── Chunked upload ผ่าน GAS ──
 // แบ่งไฟล์เป็น chunks 4MB → ส่งทีละก้อน → GAS ต่อกัน → สร้างไฟล์
-const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB ต่อ chunk (safe สำหรับ GAS 6MB limit)
+const CHUNK_SIZE = 3 * 1024 * 1024; // 3MB ต่อ chunk → base64 ~4MB (safe สำหรับ GAS 50MB payload limit)
 
 async function uploadChunked(file, folderId) {
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
@@ -386,7 +386,7 @@ async function uploadChunked(file, folderId) {
     uploadId = res.uploadId; // GAS ส่ง uploadId กลับมาทุก chunk
   }
 
-  // chunk สุดท้าย → GAS ประกอบไฟล์ → return driveUrl
+  // finalize — GAS ประกอบ temp files → สร้างไฟล์จริง
   const res = await gasPost({action:'finalizeUpload', uploadId, fileName:file.name, mimeType:file.type, folderId});
   if (!res.success) throw new Error(res.error || 'finalize failed');
   return res.driveUrl;
@@ -510,6 +510,9 @@ async function submitStep1() {
 
 // ── PROGRESS ──
 function calcProgress() {
+  // ถ้ายังมี pending → ล็อก progress ที่ค่าปัจจุบัน ไม่ขึ้น 100%
+  const totalPending = Object.values(UP).reduce((s,v)=>s+v.pending,0);
+
   const ok = [
     UP.final.urls.length>0,
     UP.footage.urls.length>0,
@@ -522,9 +525,14 @@ function calcProgress() {
     !!document.getElementById('genCode').value.trim(),
     UP.stat.urls.length>0
   ];
-  const pct = Math.round(ok.filter(Boolean).length/ok.length*100);
+
+  const done = ok.filter(Boolean).length;
+  // ถ้ายังมี pending: cap ไว้ที่ 99% เพื่อให้ user รู้ว่ายังไม่เสร็จ
+  const rawPct = Math.round(done / ok.length * 100);
+  const pct    = (totalPending > 0 && rawPct >= 100) ? 99 : rawPct;
+
   document.getElementById('prog-fill').style.width = pct+'%';
-  document.getElementById('prog-text').textContent  = pct+'%';
+  document.getElementById('prog-text').textContent  = pct + (totalPending>0 ? '% (กำลังอัพ '+totalPending+' ไฟล์...)' : '%');
 }
 
 // ── STEP 2 SUBMIT ──
@@ -570,6 +578,9 @@ async function submitStep2() {
 
     document.getElementById('success-text').textContent = appConfig.submit_success_text||'ส่งงานสำเร็จเรียบร้อย!';
     document.getElementById('creator-ref').textContent  = 'รหัสอ้างอิง: '+influencerData.creatorTag;
+    // toggle ปุ่ม share ตาม config
+    const showShare = String(appConfig.success_show_share||'TRUE').toUpperCase() !== 'FALSE';
+    document.getElementById('btn-share').style.display = showShare ? '' : 'none';
     showStep(3);
   } catch(err) {
     showErr('s2-error','เกิดข้อผิดพลาด: '+err.message);
