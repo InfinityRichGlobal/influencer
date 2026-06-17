@@ -223,21 +223,39 @@ async function _drain() {
 }
 
 // ═══════════════════════════════════════════════
-// UPLOAD — Drive resumable upload โดยตรงจาก browser
-// ไม่ผ่าน GAS เลย ไม่มี size limit ไม่ timeout
+// UPLOAD — ลองใช้ Drive API ก่อน (เร็ว, ไม่มี limit)
+//          ถ้า 401/403 (ไม่มี scope) → fallback GAS base64 (รูปเล็ก)
+//          วิดีโอขนาดใหญ่ต้องมี Drive scope จึงจะผ่านได้
 // ═══════════════════════════════════════════════
-async function uploadFile(file, folderId) {
-  if (!driveToken) throw new Error('ไม่มี Drive token');
+const MAX_BASE64 = 20 * 1024 * 1024; // 20MB — limit สำหรับ GAS base64 fallback
 
-  // 1. Initiate resumable session
+async function uploadFile(file, folderId) {
+  // ลอง Drive API ก่อน
+  if (driveToken) {
+    try {
+      return await uploadViaDriveAPI(file, folderId);
+    } catch(e) {
+      console.warn('[Drive API failed]', e.message, '→ fallback to GAS base64');
+      // ถ้า auth error แสดงว่าไม่มี scope → set driveToken=null ไม่ลองอีก
+      if (e.message.includes('401') || e.message.includes('403')) driveToken = null;
+    }
+  }
+  // Fallback: GAS base64 (ใช้ได้กับไฟล์ไม่เกิน 20MB)
+  if (file.size > MAX_BASE64) {
+    throw new Error('ไฟล์ '+file.name+' ใหญ่เกิน 20MB และไม่มี Drive scope กรุณาเพิ่ม scope drive.file ใน LIFF');
+  }
+  return await uploadViaGASBase64(file, folderId);
+}
+
+async function uploadViaDriveAPI(file, folderId) {
   const meta = {name: file.name, parents: [folderId]};
   const initRes = await fetch(
     'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id',
     {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer ' + driveToken,
-        'Content-Type':  'application/json; charset=UTF-8',
+        'Authorization':           'Bearer ' + driveToken,
+        'Content-Type':            'application/json; charset=UTF-8',
         'X-Upload-Content-Type':   file.type || 'application/octet-stream',
         'X-Upload-Content-Length': String(file.size)
       },
@@ -245,30 +263,54 @@ async function uploadFile(file, folderId) {
     }
   );
   if (!initRes.ok) {
-    const txt = await initRes.text();
-    throw new Error('Drive init ' + initRes.status + ': ' + txt.slice(0,120));
+    const t = await initRes.text();
+    throw new Error('Drive init ' + initRes.status + ': ' + t.slice(0,100));
   }
   const sessionUrl = initRes.headers.get('Location');
-  if (!sessionUrl) throw new Error('ไม่ได้ session URL จาก Drive');
-
-  // 2. Upload ไฟล์ทั้งก้อนผ่าน session URL
+  if (!sessionUrl) throw new Error('No session URL');
   const uploadRes = await fetch(sessionUrl, {
     method: 'PUT',
     headers: {'Content-Type': file.type || 'application/octet-stream'},
     body: file
   });
   if (!uploadRes.ok) {
-    const txt = await uploadRes.text();
-    throw new Error('Drive upload ' + uploadRes.status + ': ' + txt.slice(0,120));
+    const t = await uploadRes.text();
+    throw new Error('Drive upload ' + uploadRes.status + ': ' + t.slice(0,100));
   }
-  const json   = await uploadRes.json();
-  const fileId = json.id;
-  if (!fileId) throw new Error('Drive ไม่ return fileId');
-
-  // 3. แจ้ง GAS ให้ set public sharing แล้วรับ URL กลับ
-  const reg = await gasPost({action:'registerUpload', fileId});
-  if (!reg.success) throw new Error(reg.error || 'registerUpload failed');
+  const json = await uploadRes.json();
+  if (!json.id) throw new Error('No fileId returned');
+  const reg = await gasPost({action:'registerUpload', fileId:json.id});
+  if (!reg.success) throw new Error(reg.error);
   return reg.driveUrl;
+}
+
+async function uploadViaGASBase64(file, folderId) {
+  // แบ่ง 5MB chunk — GAS รับได้ทีละ chunk แล้ว append ใน Drive
+  const CHUNK = 5 * 1024 * 1024;
+  const total = Math.ceil(file.size / CHUNK);
+  let uploadId = null;
+  for (let i = 0; i < total; i++) {
+    const slice = file.slice(i*CHUNK, Math.min((i+1)*CHUNK, file.size));
+    const b64   = await blobToBase64(slice);
+    const res   = await gasPost({
+      action:'uploadChunk', uploadId, chunkIndex:i, totalChunks:total,
+      folderId, fileName:file.name, mimeType:file.type, base64Data:b64
+    });
+    if (!res.success) throw new Error(res.error||'chunk '+i+' failed');
+    uploadId = res.uploadId;
+  }
+  const res = await gasPost({action:'finalizeUpload', uploadId, fileName:file.name, mimeType:file.type, folderId});
+  if (!res.success) throw new Error(res.error||'finalize failed');
+  return res.driveUrl;
+}
+
+function blobToBase64(blob) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
 }
 
 // ── helpers ──
@@ -449,16 +491,29 @@ async function submitStep1() {
   btn.disabled=true; btn.textContent='กำลังบันทึก...';
   try {
     if (vals.tiktokUsername) vals.tiktokUsername = vals.tiktokUsername.replace(/^@/,'');
-    const res = await gasPost({
+    // ตรวจว่า fields ครบ
+    if (!vals.nickname || !vals.tiktokUsername || !vals.phone) {
+      throw new Error('กรุณากรอกชื่อเล่น, TikTok, และเบอร์ติดต่อ');
+    }
+    const payload = {
       action:'saveInfluencer',
-      lineId:lineProfile.userId, lineName:lineProfile.displayName, linePhoto:lineProfile.pictureUrl||'',
-      ...vals
-    });
+      lineId:   lineProfile.userId,
+      lineName: lineProfile.displayName,
+      linePhoto:lineProfile.pictureUrl||'',
+      nickname:      vals.nickname,
+      tiktokUsername:vals.tiktokUsername,
+      phone:         vals.phone
+    };
+    console.log('[saveInfluencer] payload:', JSON.stringify(payload));
+    const res = await gasPost(payload);
+    console.log('[saveInfluencer] response:', JSON.stringify(res));
     if (!res.success) throw new Error(res.error||'บันทึกไม่สำเร็จ');
     influencerData = {
-      folderId:res.folderId, finalFolderId:res.finalFolderId,
-      footageFolderId:res.footageFolderId, statFolderId:res.statFolderId,
-      creatorTag:res.creatorTag
+      folderId:        res.folderId,
+      finalFolderId:   res.finalFolderId,
+      footageFolderId: res.footageFolderId,
+      statFolderId:    res.statFolderId,
+      creatorTag:      res.creatorTag
     };
     showStep(2); calcProgress();
   } catch(err) {
