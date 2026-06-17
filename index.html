@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Influencer Registration</title>
+<title>Let's Collaborate!</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -217,13 +217,43 @@ let influencerData = {};
 let step1Fields = [];
 let savedFlexJson = null;
 
-// upload state — เก็บ grid element โดยตรงเพื่อป้องกัน querySelector ผิด
+// upload state
 const UP = {
-  final:   { urls:[], pending:0, grid:null, folderId:null },
-  footage: { urls:[], pending:0, grid:null, folderId:null },
-  docs:    { urls:[], pending:0, grid:null, folderId:null },
-  stat:    { urls:[], pending:0, grid:null, folderId:null }
+  final:   { urls:[], pending:0, grid:null },
+  footage: { urls:[], pending:0, grid:null },
+  docs:    { urls:[], pending:0, grid:null },
+  stat:    { urls:[], pending:0, grid:null }
 };
+
+// ── Global sequential upload queue ──
+// ไม่ให้ไฟล์แซงกัน — FIFO เรียงคิวอัพทีละไฟล์
+const _uploadQueue = [];
+let   _uploadBusy  = false;
+
+function enqueueUpload(task) {
+  _uploadQueue.push(task);
+  if (!_uploadBusy) _runQueue();
+}
+
+async function _runQueue() {
+  if (_uploadQueue.length === 0) { _uploadBusy = false; return; }
+  _uploadBusy = true;
+  const task = _uploadQueue.shift();
+  try {
+    const url = await uploadChunked(task.file, task.folderId);
+    UP[task.field].urls.push(url);
+    UP[task.field].pending--;
+    task.statusEl.className   = 'thumb-status done';
+    task.statusEl.textContent = '✓ อัพแล้ว';
+  } catch(err) {
+    UP[task.field].pending--;
+    task.statusEl.className   = 'thumb-status error';
+    task.statusEl.textContent = '✗ ล้มเหลว';
+    console.error('[upload error]', task.field, err.message);
+  }
+  calcProgress();
+  _runQueue(); // ต่อคิวถัดไป
+}
 
 // ── helpers ──
 async function gasPost(p) {
@@ -337,22 +367,8 @@ function processFile(file, field, folderId, grid) {
   UP[field].pending++;
   calcProgress();
 
-  // อัพโหลด: chunk upload ผ่าน GAS (รองรับทุกขนาด ทุก type)
-  uploadChunked(file, folderId)
-    .then(url => {
-      UP[field].urls.push(url);
-      UP[field].pending--;
-      statusEl.className   = 'thumb-status done';
-      statusEl.textContent = '✓ อัพแล้ว';
-      calcProgress();
-    })
-    .catch(err => {
-      UP[field].pending--;
-      statusEl.className   = 'thumb-status error';
-      statusEl.textContent = '✗ ล้มเหลว';
-      console.error('[upload error]', field, err.message);
-      calcProgress();
-    });
+  // ใส่คิว — ไม่อัพพร้อมกัน ทำทีละไฟล์
+  enqueueUpload({ file, field, folderId, statusEl });
 }
 
 // ── Chunked upload ผ่าน GAS ──
@@ -434,7 +450,13 @@ function buildStep1() {
       wrap.appendChild(img);
     }
     const inp = document.createElement('input');
-    inp.id = 'f-'+f.key; inp.type='text'; inp.placeholder=f.placeholder; inp.className='inp';
+    inp.id = 'f-'+f.key;
+    inp.type = 'text'; // text เสมอ เพื่อรักษา 0 นำหน้า
+    inp.inputMode = (f.key==='phone'||f.key==='tiktokUsername') ? 'text' : 'text';
+    inp.placeholder = f.placeholder;
+    inp.className = 'inp';
+    // ป้องกัน autocomplete แปลงเบอร์
+    if (f.key==='phone') { inp.setAttribute('autocomplete','tel'); inp.inputMode='tel'; }
     wrap.appendChild(inp);
     card.appendChild(wrap);
   });
