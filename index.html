@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Let's Collaborate!</title>
+<title>ส่งงาน Influencer</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -189,7 +189,7 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
 </div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDptFsAWG5BinutE9Am9HrRD3oIDT79TI1zOZA5NBviO9zYi/exec'; // ← วาง URL เต็มจาก Manage deployments ตรงนี้
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDptFsAWG5BinutE9Am9HrRD3oIDT79TI1zOZA5NBviO9zYi/exec';
 
 let appConfig    = {};
 let lineProfile  = {};
@@ -290,8 +290,8 @@ async function uploadViaDriveAPI(file, folderId) {
 }
 
 async function uploadViaGASBase64(file, folderId) {
-  // แบ่ง 5MB chunk — GAS รับได้ทีละ chunk แล้ว append ใน Drive
-  const CHUNK = 5 * 1024 * 1024;
+  // chunk ต้องเป็นทวีคูณของ 3 byte → base64 แต่ละก้อนไม่มี padding = → ต่อ string ได้ถูก
+  const CHUNK = 9 * 1024 * 1024; // 9MB หาร 3 ลงตัวพอดี
   const total = Math.ceil(file.size / CHUNK);
   let uploadId = null;
   for (let i = 0; i < total; i++) {
