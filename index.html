@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Let's Collaborate!</title>
+<title>ส่งงาน Influencer</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -57,6 +57,15 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
 </style>
 </head>
 <body>
+
+<!-- DEBUG PANEL — แสดงผลบนหน้าจอ ไม่ต้องใช้ DevTools -->
+<div id="debug-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:#1e1e1e;color:#d4d4d4;font-family:monospace;font-size:11px;padding:8px;z-index:9999;border-top:2px solid #16a34a">
+  <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+    <span style="color:#16a34a;font-weight:bold">🔍 Debug Log</span>
+    <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer">✕</button>
+  </div>
+  <div id="debug-log"></div>
+</div>
 
 <!-- STEP 0 -->
 <div id="step-0" class="center-page active">
@@ -212,11 +221,12 @@ async function _drain() {
     UP[t.field].pending--;
     t.el.className   = 'thumb-status done';
     t.el.textContent = '✓ อัพแล้ว';
+    dbg('✓ '+t.file.name+' → '+url.slice(0,40)+'...', '#4ade80');
   } catch(e) {
     UP[t.field].pending--;
     t.el.className   = 'thumb-status error';
     t.el.textContent = '✗ ล้มเหลว';
-    console.error(t.field, e.message);
+    dbg('✗ '+t.file.name+': '+e.message, '#f87171');
   }
   calcProgress();
   _drain();
@@ -313,10 +323,27 @@ function blobToBase64(blob) {
   });
 }
 
+// ── debug logger (แสดงบนหน้าจอ) ──
+function dbg(msg, color) {
+  console.log(msg);
+  const panel = document.getElementById('debug-panel');
+  const log   = document.getElementById('debug-log');
+  if (!panel || !log) return;
+  panel.style.display = 'block';
+  const line = document.createElement('div');
+  line.style.color     = color || '#d4d4d4';
+  line.style.marginBottom = '3px';
+  line.style.wordBreak = 'break-all';
+  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  log.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
 // ── helpers ──
 async function gasPost(p) {
   const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify(p)});
-  return r.json();
+  const json = await r.json();
+  return json;
 }
 function showStep(n) {
   document.querySelectorAll('.page,.center-page').forEach(e => e.classList.remove('active'));
@@ -328,17 +355,21 @@ function hideErr(id){document.getElementById(id).style.display='none';}
 // ── INIT ──
 async function init() {
   try {
+    dbg('1. โหลด config...', '#fbbf24');
     const cfgRes = await gasPost({action:'getConfig'});
     if (!cfgRes.success) throw new Error('โหลด config ไม่สำเร็จ');
     appConfig = cfgRes.config;
+    dbg('2. config OK — liff_id: '+(appConfig.liff_id?'✓':'❌ ไม่มี'), '#fbbf24');
     if (!appConfig.liff_id) throw new Error('ไม่พบ liff_id ใน config');
 
     await liff.init({liffId: appConfig.liff_id});
+    dbg('3. LIFF init OK', '#fbbf24');
     if (!liff.isLoggedIn()) { liff.login({redirectUri:location.href}); return; }
     lineProfile = await liff.getProfile();
+    dbg('4. LINE profile: '+lineProfile.displayName+' ('+lineProfile.userId+')', '#fbbf24');
 
-    // ดึง access token สำหรับ Drive API
     driveToken = liff.getAccessToken();
+    dbg('5. Drive token: '+(driveToken?'✓ มี':'❌ ไม่มี'), '#fbbf24');
 
     await Promise.all([
       gasPost({action:'log', lineId:lineProfile.userId, lineName:lineProfile.displayName, linePhoto:lineProfile.pictureUrl||''}),
@@ -349,6 +380,7 @@ async function init() {
       loadStep2Config()
     ]);
 
+    dbg('6. โหลด config/dropdown/fields เสร็จ', '#fbbf24');
     if (appConfig.header_image_url) {
       document.getElementById('s1-header-img').innerHTML =
         `<img src="${appConfig.header_image_url}" alt="header"/>`;
@@ -402,6 +434,7 @@ function processFile(file, field, folderId, grid) {
 
   UP[field].pending++;
   calcProgress();
+  dbg('อัพ: '+file.name+' ('+Math.round(file.size/1024)+'KB) → '+field, '#a78bfa');
   enqueue({file, field, folderId, el});
 }
 
@@ -504,9 +537,9 @@ async function submitStep1() {
       tiktokUsername:vals.tiktokUsername,
       phone:         vals.phone
     };
-    console.log('[saveInfluencer] payload:', JSON.stringify(payload));
+    dbg('→ saveInfluencer: '+JSON.stringify({nickname:payload.nickname, tiktok:payload.tiktokUsername, phone:payload.phone}), '#60a5fa');
     const res = await gasPost(payload);
-    console.log('[saveInfluencer] response:', JSON.stringify(res));
+    dbg('← response: '+JSON.stringify(res), res.success ? '#4ade80' : '#f87171');
     if (!res.success) throw new Error(res.error||'บันทึกไม่สำเร็จ');
     influencerData = {
       folderId:        res.folderId,
