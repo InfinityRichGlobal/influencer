@@ -1,82 +1,94 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>แชร์ผลงาน</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Join the Blissé Campaign</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f0fdf4;min-height:100vh;display:flex;align-items:center;justify-content:center}
+.wrap{max-width:360px;width:100%;margin:0 auto;padding:24px 16px;text-align:center}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.09);padding:32px 24px}
+.icon{font-size:52px;margin-bottom:12px}
+.title{font-size:18px;font-weight:700;color:#15803d;margin-bottom:8px}
+.sub{font-size:13px;color:#888;margin-bottom:20px}
+.btn{width:100%;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px}
+.btn-green{background:#16a34a;color:#fff}
+.btn-gray{background:#f4f4f5;color:#555}
+.err{color:#dc2626;font-size:13px;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:40px;height:40px;border:3px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+</style>
 </head>
-<body class="min-h-screen bg-green-50 flex items-center justify-center">
-
-<div class="max-w-sm mx-auto p-6 text-center">
-  <div id="loading" class="space-y-4">
-    <div class="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mx-auto"></div>
-    <p class="text-gray-500 text-sm">กำลังเตรียมแชร์...</p>
+<body>
+<div class="wrap">
+  <div class="card" id="view-loading">
+    <div class="spinner"></div>
+    <p style="font-size:14px;color:#888">กำลังเตรียมแชร์...</p>
   </div>
 
-  <div id="ready" class="hidden space-y-4">
-    <div class="text-5xl">📤</div>
-    <h2 class="text-lg font-bold text-green-700">พร้อมแชร์ผลงาน</h2>
-    <p class="text-sm text-gray-500">กดปุ่มด้านล่างเพื่อเลือกผู้รับใน LINE</p>
-    <button onclick="doShare()"
-      class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-2xl text-base transition">
-      📤 เลือกผู้รับ / กลุ่ม
-    </button>
-    <button onclick="closePage()"
-      class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 py-3 rounded-2xl transition text-sm">
-      ยกเลิก
-    </button>
+  <div class="card" id="view-ready" style="display:none">
+    <div class="icon">📤</div>
+    <div class="title">พร้อมแชร์ผลงาน</div>
+    <div class="sub">กดปุ่มด้านล่างเพื่อเลือกผู้รับใน LINE</div>
+    <button class="btn btn-green" onclick="doShare()">📤 เลือกผู้รับ / กลุ่ม</button>
+    <button class="btn btn-gray"  onclick="closePage()">ยกเลิก</button>
   </div>
 
-  <div id="error" class="hidden space-y-3">
-    <div class="text-5xl">❌</div>
-    <p id="error-msg" class="text-red-500 text-sm"></p>
-    <button onclick="closePage()"
-      class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl text-sm">
-      ปิด
-    </button>
+  <div class="card" id="view-error" style="display:none">
+    <div class="icon">❌</div>
+    <p id="err-msg" class="err">เกิดข้อผิดพลาด</p>
+    <button class="btn btn-gray" onclick="closePage()">ปิด</button>
   </div>
 </div>
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxMK6RAGjuRdfN52qQdeuanX66Lyd7uk7JuYFwe6_HcUhenmGHiRSDgO2qmIZiqZus/exec';
-
 let flexMsg = null;
 
-async function gasPost(payload) {
-  const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
-  return res.json();
+async function gasPost(p) {
+  const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify(p)});
+  return r.json();
 }
 
-function showSection(id) {
-  ['loading','ready','error'].forEach(s => {
-    document.getElementById(s).classList.toggle('hidden', s !== id);
+function show(id) {
+  ['view-loading','view-ready','view-error'].forEach(v => {
+    document.getElementById(v).style.display = v===id ? 'block' : 'none';
   });
+}
+
+function showErr(msg) {
+  document.getElementById('err-msg').textContent = msg;
+  show('view-error');
 }
 
 async function init() {
   try {
-    // ดึง liff_id จาก config
-    const cfgRes = await gasPost({ action: 'getConfig' });
+    // ดึง lineId จาก URL param
+    const params = new URLSearchParams(location.search);
+    const lineIdFromUrl = params.get('lineId');
+
+    const cfgRes = await gasPost({action:'getConfig'});
     if (!cfgRes.success) throw new Error('โหลด config ไม่สำเร็จ');
     const liffId = cfgRes.config['liff_id'];
     if (!liffId) throw new Error('ไม่พบ liff_id');
 
-    await liff.init({ liffId });
-    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    await liff.init({liffId});
+    if (!liff.isLoggedIn()) { liff.login({redirectUri:location.href}); return; }
 
     const profile = await liff.getProfile();
+    // ใช้ lineId จาก URL ก่อน (กรณีเปิดจาก Flex button ของคนอื่น)
+    // ถ้าไม่มีให้ใช้ lineId ของ user ที่ login อยู่
+    const targetId = lineIdFromUrl || profile.userId;
 
-    // ดึง flex_json ของ user นี้
-    const res = await gasPost({ action: 'getFlexJson', lineId: profile.userId });
+    const res = await gasPost({action:'getFlexJson', lineId:targetId});
     if (!res.success || !res.flexJson) throw new Error('ไม่พบข้อมูล Flex Message\nกรุณาส่งงานก่อน');
 
     flexMsg = JSON.parse(res.flexJson);
-    showSection('ready');
+    show('view-ready');
   } catch(err) {
-    document.getElementById('error-msg').textContent = err.message;
-    showSection('error');
+    showErr(err.message);
   }
 }
 
@@ -87,16 +99,13 @@ async function doShare() {
       throw new Error('ShareTargetPicker ไม่รองรับในอุปกรณ์นี้\nกรุณาเปิดใน LINE app');
     }
     const result = await liff.shareTargetPicker([flexMsg]);
-    if (result) {
-      if (result.status === 'success') {
-        alert('แชร์สำเร็จ! ✅');
-        closePage();
-      }
-      // status === 'cancel' → user ปิดเอง ไม่ต้องทำอะไร
+    if (result && result.status === 'success') {
+      alert('แชร์สำเร็จ! ✅');
+      closePage();
     }
+    // status === 'cancel' → user ปิดเอง ไม่ทำอะไร
   } catch(err) {
-    document.getElementById('error-msg').textContent = 'เกิดข้อผิดพลาด: ' + err.message;
-    showSection('error');
+    showErr('แชร์ไม่สำเร็จ: ' + err.message);
   }
 }
 
