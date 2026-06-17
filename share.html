@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>แชร์ผลงาน</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-green-50 flex items-center justify-center">
+
+<div class="max-w-sm mx-auto p-6 text-center">
+  <div id="loading" class="space-y-4">
+    <div class="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mx-auto"></div>
+    <p class="text-gray-500 text-sm">กำลังเตรียมแชร์...</p>
+  </div>
+
+  <div id="ready" class="hidden space-y-4">
+    <div class="text-5xl">📤</div>
+    <h2 class="text-lg font-bold text-green-700">พร้อมแชร์ผลงาน</h2>
+    <p class="text-sm text-gray-500">กดปุ่มด้านล่างเพื่อเลือกผู้รับใน LINE</p>
+    <button onclick="doShare()"
+      class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-2xl text-base transition">
+      📤 เลือกผู้รับ / กลุ่ม
+    </button>
+    <button onclick="closePage()"
+      class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 py-3 rounded-2xl transition text-sm">
+      ยกเลิก
+    </button>
+  </div>
+
+  <div id="error" class="hidden space-y-3">
+    <div class="text-5xl">❌</div>
+    <p id="error-msg" class="text-red-500 text-sm"></p>
+    <button onclick="closePage()"
+      class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl text-sm">
+      ปิด
+    </button>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxMK6RAGjuRdfN52qQdeuanX66Lyd7uk7JuYFwe6_HcUhenmGHiRSDgO2qmIZiqZus/exec';
+
+let flexMsg = null;
+
+async function gasPost(payload) {
+  const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+  return res.json();
+}
+
+function showSection(id) {
+  ['loading','ready','error'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+async function init() {
+  try {
+    // ดึง liff_id จาก config
+    const cfgRes = await gasPost({ action: 'getConfig' });
+    if (!cfgRes.success) throw new Error('โหลด config ไม่สำเร็จ');
+    const liffId = cfgRes.config['liff_id'];
+    if (!liffId) throw new Error('ไม่พบ liff_id');
+
+    await liff.init({ liffId });
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+
+    const profile = await liff.getProfile();
+
+    // ดึง flex_json ของ user นี้
+    const res = await gasPost({ action: 'getFlexJson', lineId: profile.userId });
+    if (!res.success || !res.flexJson) throw new Error('ไม่พบข้อมูล Flex Message\nกรุณาส่งงานก่อน');
+
+    flexMsg = JSON.parse(res.flexJson);
+    showSection('ready');
+  } catch(err) {
+    document.getElementById('error-msg').textContent = err.message;
+    showSection('error');
+  }
+}
+
+async function doShare() {
+  if (!flexMsg) return;
+  try {
+    if (!liff.isApiAvailable('shareTargetPicker')) {
+      throw new Error('ShareTargetPicker ไม่รองรับในอุปกรณ์นี้\nกรุณาเปิดใน LINE app');
+    }
+    const result = await liff.shareTargetPicker([flexMsg]);
+    if (result) {
+      if (result.status === 'success') {
+        alert('แชร์สำเร็จ! ✅');
+        closePage();
+      }
+      // status === 'cancel' → user ปิดเอง ไม่ต้องทำอะไร
+    }
+  } catch(err) {
+    document.getElementById('error-msg').textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+    showSection('error');
+  }
+}
+
+function closePage() {
+  try { liff.closeWindow(); } catch(e) { window.close(); }
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
