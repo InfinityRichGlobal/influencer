@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ส่งงาน Influencer</title>
+<title>ส่งงาน Influeฟหดฟหดncer</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -237,7 +237,7 @@ async function _drain() {
 //          ถ้า 401/403 (ไม่มี scope) → fallback GAS base64 (รูปเล็ก)
 //          วิดีโอขนาดใหญ่ต้องมี Drive scope จึงจะผ่านได้
 // ═══════════════════════════════════════════════
-const MAX_BASE64 = 20 * 1024 * 1024; // 20MB — limit สำหรับ GAS base64 fallback
+const MAX_BASE64 = 50 * 1024 * 1024; // 50MB — limit สำหรับ GAS base64 fallback
 
 async function uploadFile(file, folderId) {
   // ลอง Drive API ก่อน
@@ -252,7 +252,7 @@ async function uploadFile(file, folderId) {
   }
   // Fallback: GAS base64 (ใช้ได้กับไฟล์ไม่เกิน 20MB)
   if (file.size > MAX_BASE64) {
-    throw new Error('ไฟล์ '+file.name+' ใหญ่เกิน 20MB และไม่มี Drive scope กรุณาเพิ่ม scope drive.file ใน LIFF');
+    throw new Error('ไฟล์ "'+file.name+'" ขนาด '+Math.round(file.size/1024/1024)+'MB ใหญ่เกินไป\nกรุณาบีบอัดวิดีโอก่อนอัพโหลด หรือเพิ่ม scope drive.file ใน LIFF');
   }
   return await uploadViaGASBase64(file, folderId);
 }
