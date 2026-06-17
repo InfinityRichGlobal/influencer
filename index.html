@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ส่งงาน Influencer</title>
+<title>Influencer Registration</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -11,83 +11,75 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:#fff;color:#111;min-height:100vh;-webkit-font-smoothing:antialiased}
 
-/* ── layout ── */
 .page{display:none;max-width:480px;margin:0 auto;padding:16px 16px 80px}
 .page.active{display:block}
 .center-page{display:none;max-width:480px;margin:0 auto;padding:24px 16px;min-height:100vh;align-items:center;justify-content:center;flex-direction:column}
 .center-page.active{display:flex}
 
-/* ── card ── */
 .card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:15px;margin-bottom:12px}
 
-/* ── header img ── */
 #s1-header-img img{width:100%;border-radius:5px;display:block;margin-bottom:16px}
-
-/* ── page title ── */
 .page-title{font-size:18px;font-weight:600;color:#16a34a;text-align:center;margin-bottom:16px}
 
-/* ── step1: single card ── */
 #s1-single-card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:15px;margin-bottom:16px}
 .s1-field{margin-bottom:14px}
 .s1-field:last-child{margin-bottom:0}
 
-/* ── labels ── */
 .field-label{font-size:14px;font-weight:600;color:#111;margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .req-badge{font-size:11px;background:#fce7f3;color:#be185d;border-radius:3px;padding:1px 6px;font-weight:500}
 .sublabel{font-size:12px;color:#888;margin-bottom:8px}
-
-/* ── guide image ── */
 .guide-img{width:100%;border-radius:5px;margin-bottom:8px;border:1px solid #e5e7eb}
 
-/* ── inputs ── */
 .inp{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:10px 12px;font-size:15px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa;transition:border-color .15s}
 .inp:focus{border-color:#16a34a;background:#fff}
 select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-.inp-row{display:grid;gap:8px}
 
-/* ── file button ── */
-.file-wrap{position:relative}
-.file-label{display:inline-flex;align-items:center;gap:6px;border:1.5px dashed #86efac;border-radius:5px;padding:9px 16px;font-size:13px;font-weight:500;color:#16a34a;cursor:pointer;transition:background .15s}
-.file-label:hover{background:#f0fdf4}
-.file-label input{position:absolute;opacity:0;inset:0;cursor:pointer}
+/* ── file button: ไม่ใช้ position absolute แล้ว ── */
+.file-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1.5px dashed #86efac;border-radius:5px;
+  padding:9px 16px;font-size:13px;font-weight:500;color:#16a34a;
+  cursor:pointer;background:transparent;
+  font-family:'Sarabun',sans-serif;
+  transition:background .15s;
+}
+.file-btn:hover{background:#f0fdf4}
 
 /* ── thumb grid ── */
-.thumb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.thumb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;min-height:0}
 .thumb-item{position:relative;border-radius:5px;overflow:hidden;aspect-ratio:1;background:#f1f5f9;border:1.5px solid #e5e7eb}
-.thumb-item img,.thumb-item video{width:100%;height:100%;object-fit:cover;display:block}
+.thumb-item img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb-item .icon-box{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;font-size:22px}
-.thumb-item .icon-box span:last-child{font-size:9px;color:#64748b;text-align:center;word-break:break-all}
-.thumb-status{position:absolute;bottom:0;left:0;right:0;padding:3px 4px;font-size:9px;font-weight:700;text-align:center}
+.thumb-item .icon-box span.name{font-size:9px;color:#64748b;text-align:center;word-break:break-all;line-height:1.3}
+.thumb-status{position:absolute;bottom:0;left:0;right:0;padding:3px 4px;font-size:9px;font-weight:700;text-align:center;pointer-events:none}
 .thumb-status.uploading{background:rgba(245,158,11,.88);color:#fff}
 .thumb-status.done{background:rgba(16,185,129,.88);color:#fff}
 .thumb-status.error{background:rgba(239,68,68,.88);color:#fff}
 
-/* ── progress ── */
 .progress-wrap{background:#fff;border-radius:5px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:12px 15px;position:sticky;top:8px;z-index:10;margin-bottom:14px}
 .progress-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:#444}
 .progress-row span:last-child{font-weight:700;color:#16a34a}
 .progress-bar-bg{background:#f1f5f9;border-radius:99px;height:6px}
 .progress-bar-fill{background:#16a34a;height:6px;border-radius:99px;transition:width .35s ease}
 
-/* ── error box ── */
 .err-box{display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:10px 14px;font-size:13px;color:#b91c1c;margin-top:10px}
 
-/* ── buttons ── */
 .btn-primary{width:100%;background:#16a34a;color:#fff;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;padding:14px;border:none;border-radius:5px;cursor:pointer;transition:background .15s;margin-top:14px}
 .btn-primary:hover{background:#15803d}
 .btn-primary:disabled{background:#86efac;cursor:not-allowed}
 .btn-secondary{width:100%;background:#f4f4f5;color:#444;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;padding:12px;border:none;border-radius:5px;cursor:pointer;margin-top:8px}
 
-/* ── success page ── */
 .success-card{background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.09);padding:32px 24px;text-align:center;width:100%}
 .success-icon{font-size:56px;margin-bottom:12px}
 .success-title{font-size:20px;font-weight:700;color:#16a34a;margin-bottom:8px}
 .success-ref{font-size:14px;font-weight:600;color:#16a34a;background:#f0fdf4;border-radius:5px;padding:10px;margin:10px 0}
+
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<!-- STEP 0: loading -->
+<!-- STEP 0 -->
 <div id="step-0" class="center-page active">
   <div style="width:44px;height:44px;border:3px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite"></div>
   <p style="margin-top:12px;font-size:14px;color:#888">กำลังโหลด...</p>
@@ -97,9 +89,7 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
 <div id="step-1" class="page">
   <div id="s1-header-img"></div>
   <div id="s1-page-title" class="page-title">กรอกข้อมูล Influencer</div>
-  <div id="s1-single-card">
-    <!-- ฟิลด์ถูกสร้างโดย JS -->
-  </div>
+  <div id="s1-single-card"></div>
   <div id="s1-error" class="err-box"></div>
   <button class="btn-primary" onclick="submitStep1()">ถัดไป →</button>
 </div>
@@ -113,40 +103,35 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
 
   <div id="s2-title" class="page-title">อัพโหลดชิ้นงาน</div>
 
-  <!-- 1 final -->
-  <div class="card" id="card-final">
+  <!-- การ์ดแต่ละใบใช้ data-field เพื่อให้ JS หา grid ได้แน่นอน -->
+
+  <div class="card">
     <div class="field-label"><span id="lbl-final">ชิ้นงานสมบูรณ์</span><span class="req-badge">จำเป็น</span></div>
     <div id="sub-final" class="sublabel">รูปภาพ / วิดีโอ (เลือกได้หลายไฟล์)</div>
     <img id="guide-final" class="guide-img" style="display:none"/>
-    <label class="file-label">📎 เลือกไฟล์
-      <input type="file" id="inp-final" multiple accept="image/*,video/*" onchange="onFilePick(this,'final','finalFolderId')"/>
-    </label>
+    <button class="file-btn" onclick="document.getElementById('inp-final').click()">📎 เลือกไฟล์</button>
+    <input type="file" id="inp-final" multiple accept="image/*,video/*" style="display:none"/>
     <div id="thumbs-final" class="thumb-grid"></div>
   </div>
 
-  <!-- 2 footage -->
-  <div class="card" id="card-footage">
+  <div class="card">
     <div class="field-label"><span id="lbl-footage">ฟุตเทจ</span><span class="req-badge">จำเป็น</span></div>
     <div id="sub-footage" class="sublabel">รูปภาพ / วิดีโอ (เลือกได้หลายไฟล์)</div>
     <img id="guide-footage" class="guide-img" style="display:none"/>
-    <label class="file-label">📎 เลือกไฟล์
-      <input type="file" id="inp-footage" multiple accept="image/*,video/*" onchange="onFilePick(this,'footage','footageFolderId')"/>
-    </label>
+    <button class="file-btn" onclick="document.getElementById('inp-footage').click()">📎 เลือกไฟล์</button>
+    <input type="file" id="inp-footage" multiple accept="image/*,video/*" style="display:none"/>
     <div id="thumbs-footage" class="thumb-grid"></div>
   </div>
 
-  <!-- 3 docs -->
-  <div class="card" id="card-docs">
+  <div class="card">
     <div class="field-label"><span id="lbl-docs">สำเนาบัตรประชาชน + สำเนา Bookbank</span><span class="req-badge">จำเป็น</span></div>
     <div id="sub-docs" class="sublabel">ไฟล์รูปภาพเท่านั้น</div>
     <img id="guide-docs" class="guide-img" style="display:none"/>
-    <label class="file-label">📎 เลือกรูป
-      <input type="file" id="inp-docs" multiple accept="image/*" onchange="onFilePick(this,'docs','folderId')"/>
-    </label>
+    <button class="file-btn" onclick="document.getElementById('inp-docs').click()">📎 เลือกรูป</button>
+    <input type="file" id="inp-docs" multiple accept="image/*" style="display:none"/>
     <div id="thumbs-docs" class="thumb-grid"></div>
   </div>
 
-  <!-- 4 post1 -->
   <div class="card">
     <div class="field-label"><span id="lbl-post1">ลิงก์โพสงาน ช่องที่ 1</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-post1" class="guide-img" style="display:none"/>
@@ -156,7 +141,6 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <input id="post1Url" type="url" class="inp" placeholder="https://..." oninput="calcProgress()"/>
   </div>
 
-  <!-- 5 post2 -->
   <div class="card">
     <div class="field-label"><span id="lbl-post2">ลิงก์โพสงาน ช่องที่ 2</span></div>
     <img id="guide-post2" class="guide-img" style="display:none"/>
@@ -166,7 +150,6 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <input id="post2Url" type="url" class="inp" placeholder="https://..."/>
   </div>
 
-  <!-- 6 bank -->
   <div class="card">
     <div class="field-label"><span id="lbl-bank">ธนาคาร</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-bank" class="guide-img" style="display:none"/>
@@ -175,42 +158,36 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     </select>
   </div>
 
-  <!-- 7 bankAccount -->
   <div class="card">
     <div class="field-label"><span id="lbl-bankAccount">เลขบัญชี</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-bankAccount" class="guide-img" style="display:none"/>
     <input id="bankAccount" type="text" inputmode="numeric" class="inp" placeholder="กรอกเลขบัญชี" oninput="calcProgress()"/>
   </div>
 
-  <!-- 8 accountName -->
   <div class="card">
     <div class="field-label"><span id="lbl-accountName">ชื่อเจ้าของบัญชี</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-accountName" class="guide-img" style="display:none"/>
     <input id="accountName" type="text" class="inp" placeholder="ชื่อ-นามสกุล" oninput="calcProgress()"/>
   </div>
 
-  <!-- 9 amount -->
   <div class="card">
     <div class="field-label"><span id="lbl-amount">จำนวนเงิน</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-amount" class="guide-img" style="display:none"/>
     <input id="amount" type="text" inputmode="decimal" class="inp" placeholder="0.00" oninput="calcProgress()"/>
   </div>
 
-  <!-- 10 genCode -->
   <div class="card">
     <div class="field-label"><span id="lbl-genCode">เจนโค้ด 90 วัน</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-genCode" class="guide-img" style="display:none"/>
     <input id="genCode" type="text" class="inp" placeholder="รหัส..." oninput="calcProgress()"/>
   </div>
 
-  <!-- 11 stat -->
-  <div class="card" id="card-stat">
+  <div class="card">
     <div class="field-label"><span id="lbl-stat">ภาพ Stat 7 วัน</span><span class="req-badge">จำเป็น</span></div>
     <div id="sub-stat" class="sublabel">ไฟล์รูปภาพเท่านั้น</div>
     <img id="guide-stat" class="guide-img" style="display:none"/>
-    <label class="file-label">📎 เลือกรูป
-      <input type="file" id="inp-stat" multiple accept="image/*" onchange="onFilePick(this,'stat','statFolderId')"/>
-    </label>
+    <button class="file-btn" onclick="document.getElementById('inp-stat').click()">📎 เลือกรูป</button>
+    <input type="file" id="inp-stat" multiple accept="image/*" style="display:none"/>
     <div id="thumbs-stat" class="thumb-grid"></div>
   </div>
 
@@ -218,7 +195,7 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
   <button class="btn-primary" id="btn-submit2" onclick="submitStep2()">ส่งงาน ✓</button>
 </div>
 
-<!-- STEP 3: success -->
+<!-- STEP 3 -->
 <div id="step-3" class="center-page">
   <div class="success-card">
     <div class="success-icon">🎉</div>
@@ -231,62 +208,47 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
   </div>
 </div>
 
-<style>
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
-
 <script>
-// ─── CONFIG ───
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxMK6RAGjuRdfN52qQdeuanX66Lyd7uk7JuYFwe6_HcUhenmGHiRSDgO2qmIZiqZus/exec';
 
-// ─── STATE ───
 let appConfig = {};
 let lineProfile = {};
-let influencerData = {};   // folderId, finalFolderId, footageFolderId, statFolderId, creatorTag
+let influencerData = {};
 let step1Fields = [];
 let savedFlexJson = null;
 
-// upload state — keyed by field name
+// upload state — เก็บ grid element โดยตรงเพื่อป้องกัน querySelector ผิด
 const UP = {
-  final:   {urls:[], pending:0},
-  footage: {urls:[], pending:0},
-  docs:    {urls:[], pending:0},
-  stat:    {urls:[], pending:0}
+  final:   { urls:[], pending:0, grid:null, folderId:null },
+  footage: { urls:[], pending:0, grid:null, folderId:null },
+  docs:    { urls:[], pending:0, grid:null, folderId:null },
+  stat:    { urls:[], pending:0, grid:null, folderId:null }
 };
 
-// ─── HELPERS ───
-async function gasPost(payload) {
-  const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify(payload)});
+// ── helpers ──
+async function gasPost(p) {
+  const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify(p)});
   return r.json();
 }
-
 function showStep(n) {
-  document.querySelectorAll('.page,.center-page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.page,.center-page').forEach(e => e.classList.remove('active'));
   document.getElementById('step-'+n).classList.add('active');
 }
+function showErr(id, msg) { const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; }
+function hideErr(id)       { document.getElementById(id).style.display='none'; }
 
-function showErr(id, msg) {
-  const el = document.getElementById(id);
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-function hideErr(id) { document.getElementById(id).style.display = 'none'; }
-
-// ─── INIT ───
+// ── INIT ──
 async function init() {
   try {
     const cfgRes = await gasPost({action:'getConfig'});
     if (!cfgRes.success) throw new Error('โหลด config ไม่สำเร็จ');
     appConfig = cfgRes.config;
 
-    const liffId = appConfig['liff_id'];
-    if (!liffId) throw new Error('ไม่พบ liff_id ใน config');
-
-    await liff.init({liffId});
+    if (!appConfig.liff_id) throw new Error('ไม่พบ liff_id ใน config');
+    await liff.init({liffId: appConfig.liff_id});
     if (!liff.isLoggedIn()) { liff.login({redirectUri:location.href}); return; }
     lineProfile = await liff.getProfile();
 
-    // parallel loads
     await Promise.all([
       gasPost({action:'log', lineId:lineProfile.userId, lineName:lineProfile.displayName, linePhoto:lineProfile.pictureUrl||''}),
       loadDropdown('Social','post1Platform'),
@@ -302,6 +264,14 @@ async function init() {
     }
 
     buildStep1();
+
+    // ── ผูก input[file] กับ handler หลัง DOM พร้อม ──
+    // วิธีนี้แน่ใจ 100% ว่า grid/folderId ถูก field
+    bindFileInput('inp-final',   'final',   'finalFolderId');
+    bindFileInput('inp-footage', 'footage', 'footageFolderId');
+    bindFileInput('inp-docs',    'docs',    'folderId');
+    bindFileInput('inp-stat',    'stat',    'statFolderId');
+
     showStep(1);
   } catch(err) {
     document.getElementById('step-0').innerHTML =
@@ -312,7 +282,126 @@ async function init() {
   }
 }
 
-// ─── STEP 1 CONFIG ───
+// ── ผูก event กับ input[file] แบบ explicit — ไม่ใช้ onchange inline ──
+function bindFileInput(inputId, field, folderKey) {
+  const input = document.getElementById(inputId);
+  const grid  = document.getElementById('thumbs-' + field);
+
+  // เก็บ reference ไว้ใน UP object
+  UP[field].grid = grid;
+  // folderKey จะถูก resolve ตอน event ยิง (influencerData อาจยังว่าง)
+
+  input.addEventListener('change', function() {
+    // ── capture ทุกอย่างก่อน reset ──
+    const files     = Array.from(this.files);
+    const folderId  = influencerData[folderKey]; // ✅ อ่านตอนนี้ — influencerData พร้อมแล้ว
+    const targetGrid = UP[field].grid;           // ✅ grid ตรงของ field นี้แน่นอน
+    this.value = '';                             // reset หลัง capture
+
+    files.forEach(file => processFile(file, field, folderId, targetGrid));
+  });
+}
+
+// ── สร้าง thumb + อัพโหลด ──
+function processFile(file, field, folderId, grid) {
+  if (!folderId) {
+    alert('ยังไม่พบข้อมูล folder กรุณาลองใหม่');
+    return;
+  }
+
+  // สร้าง thumb item
+  const item = document.createElement('div');
+  item.className = 'thumb-item';
+
+  if (file.type.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    item.appendChild(img);
+  } else {
+    // วิดีโอหรือไฟล์อื่น — แสดง icon
+    const box = document.createElement('div');
+    box.className = 'icon-box';
+    const emoji = file.type.startsWith('video/') ? '🎬' : '📄';
+    box.innerHTML = `<span>${emoji}</span><span class="name">${file.name.slice(0,20)}</span>`;
+    item.appendChild(box);
+  }
+
+  const statusEl = document.createElement('div');
+  statusEl.className = 'thumb-status uploading';
+  statusEl.textContent = 'กำลังอัพ…';
+  item.appendChild(statusEl);
+
+  // append ไปที่ grid ของ field นี้โดยตรง
+  grid.appendChild(item);
+
+  UP[field].pending++;
+  calcProgress();
+
+  // อัพโหลด: chunk upload ผ่าน GAS (รองรับทุกขนาด ทุก type)
+  uploadChunked(file, folderId)
+    .then(url => {
+      UP[field].urls.push(url);
+      UP[field].pending--;
+      statusEl.className   = 'thumb-status done';
+      statusEl.textContent = '✓ อัพแล้ว';
+      calcProgress();
+    })
+    .catch(err => {
+      UP[field].pending--;
+      statusEl.className   = 'thumb-status error';
+      statusEl.textContent = '✗ ล้มเหลว';
+      console.error('[upload error]', field, err.message);
+      calcProgress();
+    });
+}
+
+// ── Chunked upload ผ่าน GAS ──
+// แบ่งไฟล์เป็น chunks 4MB → ส่งทีละก้อน → GAS ต่อกัน → สร้างไฟล์
+const CHUNK_SIZE = 4 * 1024 * 1024; // 4MB ต่อ chunk (safe สำหรับ GAS 6MB limit)
+
+async function uploadChunked(file, folderId) {
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  let uploadId = null;
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start  = i * CHUNK_SIZE;
+    const end    = Math.min(start + CHUNK_SIZE, file.size);
+    const chunk  = file.slice(start, end);
+    const b64    = await blobToBase64(chunk);
+
+    const payload = {
+      action:      'uploadChunk',
+      uploadId,           // null สำหรับ chunk แรก → GAS จะ return uploadId ใหม่
+      chunkIndex:  i,
+      totalChunks,
+      folderId,
+      fileName:    file.name,
+      mimeType:    file.type,
+      base64Data:  b64
+    };
+
+    const res = await gasPost(payload);
+    if (!res.success) throw new Error(res.error || 'chunk upload failed');
+
+    uploadId = res.uploadId; // GAS ส่ง uploadId กลับมาทุก chunk
+  }
+
+  // chunk สุดท้าย → GAS ประกอบไฟล์ → return driveUrl
+  const res = await gasPost({action:'finalizeUpload', uploadId, fileName:file.name, mimeType:file.type, folderId});
+  if (!res.success) throw new Error(res.error || 'finalize failed');
+  return res.driveUrl;
+}
+
+function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(blob);
+  });
+}
+
+// ── STEP 1 CONFIG ──
 async function loadStep1Config() {
   try {
     const res = await gasPost({action:'getStep1Config'});
@@ -322,9 +411,9 @@ async function loadStep1Config() {
     }
   } catch(e) {
     step1Fields = [
-      {key:'nickname',      label:'ชื่อเล่น',          placeholder:'ชื่อเล่น',   required:true,  guideImageUrl:''},
-      {key:'tiktokUsername',label:'@Username TikTok',  placeholder:'@username',  required:true,  guideImageUrl:''},
-      {key:'phone',         label:'เบอร์ติดต่อ',        placeholder:'0812345678', required:true,  guideImageUrl:''}
+      {key:'nickname',       label:'ชื่อเล่น',          placeholder:'ชื่อเล่น',    required:true,  guideImageUrl:''},
+      {key:'tiktokUsername', label:'@Username TikTok',  placeholder:'@username',   required:true,  guideImageUrl:''},
+      {key:'phone',          label:'เบอร์ติดต่อ',        placeholder:'0812345678',  required:true,  guideImageUrl:''}
     ];
   }
 }
@@ -335,56 +424,37 @@ function buildStep1() {
   step1Fields.forEach(f => {
     const wrap = document.createElement('div');
     wrap.className = 's1-field';
-
     const lbl = document.createElement('div');
     lbl.className = 'field-label';
-    lbl.innerHTML = `${f.label}${f.required ? ' <span class="req-badge">จำเป็น</span>' : ''}`;
+    lbl.innerHTML = `${f.label}${f.required?' <span class="req-badge">จำเป็น</span>':''}`;
     wrap.appendChild(lbl);
-
     if (f.guideImageUrl) {
       const img = document.createElement('img');
-      img.src = f.guideImageUrl;
-      img.className = 'guide-img';
+      img.src = f.guideImageUrl; img.className = 'guide-img';
       wrap.appendChild(img);
     }
-
     const inp = document.createElement('input');
-    inp.id = 'f-' + f.key;
-    inp.type = 'text';
-    inp.placeholder = f.placeholder;
-    inp.className = 'inp';
-    if (f.required) inp.required = true;
+    inp.id = 'f-'+f.key; inp.type='text'; inp.placeholder=f.placeholder; inp.className='inp';
     wrap.appendChild(inp);
-
     card.appendChild(wrap);
   });
 }
 
-// ─── STEP 2 CONFIG ───
+// ── STEP 2 CONFIG ──
 async function loadStep2Config() {
   try {
     const res = await gasPost({action:'getStep2Config'});
     if (!res.success) return;
     const flds = res.fields;
-    // Apply labels
-    const map = {
-      final:'lbl-final', footage:'lbl-footage', docs:'lbl-docs',
-      post1:'lbl-post1', post2:'lbl-post2', bank:'lbl-bank',
-      bankAccount:'lbl-bankAccount', accountName:'lbl-accountName',
-      amount:'lbl-amount', genCode:'lbl-genCode', stat:'lbl-stat'
-    };
-    Object.entries(map).forEach(([key, lblId]) => {
-      if (flds[key]) {
-        const el = document.getElementById(lblId);
-        if (el) el.textContent = flds[key].label;
-        const sub = document.getElementById('sub-'+key);
-        if (sub && flds[key].sublabel) sub.textContent = flds[key].sublabel;
-        const guide = document.getElementById('guide-'+key);
-        if (guide && flds[key].guideImageUrl) {
-          guide.src = flds[key].guideImageUrl;
-          guide.style.display = 'block';
-        }
-      }
+    const ids = ['final','footage','docs','post1','post2','bank','bankAccount','accountName','amount','genCode','stat'];
+    ids.forEach(k => {
+      if (!flds[k]) return;
+      const lbl = document.getElementById('lbl-'+k);
+      if (lbl) lbl.textContent = flds[k].label;
+      const sub = document.getElementById('sub-'+k);
+      if (sub && flds[k].sublabel) sub.textContent = flds[k].sublabel;
+      const guide = document.getElementById('guide-'+k);
+      if (guide && flds[k].guideImageUrl) { guide.src=flds[k].guideImageUrl; guide.style.display='block'; }
     });
   } catch(e) {}
 }
@@ -394,30 +464,25 @@ async function loadDropdown(sheetName, selId) {
     const res = await gasPost({action:'getDropdown', sheetName});
     if (res.success) {
       const sel = document.getElementById(selId);
-      res.values.forEach(v => {
-        const o = document.createElement('option');
-        o.value = o.textContent = v;
-        sel.appendChild(o);
-      });
+      res.values.forEach(v => { const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
     }
   } catch(e) {}
 }
 
-// ─── STEP 1 SUBMIT ───
+// ── STEP 1 SUBMIT ──
 async function submitStep1() {
   hideErr('s1-error');
-  const vals = {};
-  let bad = false;
+  const vals = {}; let bad = false;
   step1Fields.forEach(f => {
     const el = document.getElementById('f-'+f.key);
-    const v = el ? el.value.trim() : '';
+    const v  = el ? el.value.trim() : '';
     if (f.required && !v) bad = true;
     vals[f.key] = v;
   });
   if (bad) { showErr('s1-error','กรุณากรอกข้อมูลให้ครบทุกช่องที่จำเป็น'); return; }
 
   const btn = document.querySelector('#step-1 .btn-primary');
-  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  btn.disabled=true; btn.textContent='กำลังบันทึก...';
 
   try {
     if (vals.tiktokUsername) vals.tiktokUsername = vals.tiktokUsername.replace(/^@/,'');
@@ -427,198 +492,46 @@ async function submitStep1() {
       ...vals
     });
     if (!res.success) throw new Error(res.error||'บันทึกไม่สำเร็จ');
+
     influencerData = {
-      folderId:res.folderId, finalFolderId:res.finalFolderId,
-      footageFolderId:res.footageFolderId, statFolderId:res.statFolderId,
-      creatorTag:res.creatorTag
+      folderId:        res.folderId,
+      finalFolderId:   res.finalFolderId,
+      footageFolderId: res.footageFolderId,
+      statFolderId:    res.statFolderId,
+      creatorTag:      res.creatorTag
     };
     showStep(2);
     calcProgress();
   } catch(err) {
     showErr('s1-error','เกิดข้อผิดพลาด: '+err.message);
-    btn.disabled = false; btn.textContent = 'ถัดไป →';
+    btn.disabled=false; btn.textContent='ถัดไป →';
   }
 }
 
-// ─── FILE UPLOAD (Drive API โดยตรง) ───
-//
-// สาเหตุที่ใช้ Drive API โดยตรง (ไม่ผ่าน GAS base64):
-//   GAS มี payload limit ~50MB → วิดีโออัพไม่ได้
-//   Drive resumable upload รองรับไฟล์ขนาดใดก็ได้
-//
-// Flow:
-//   1. browser ขอ upload session URL จาก Drive API
-//   2. browser PUT ไฟล์ตรงไป Drive
-//   3. browser ส่ง fileId ให้ GAS → set public sharing
-
-async function getDriveToken() {
-  // ใช้ access token จาก LIFF (LINE login scope: https://www.googleapis.com/auth/drive.file)
-  // *** สำคัญ: LIFF channel ต้องเปิด scope drive.file ***
-  // ถ้าไม่มี scope ให้ fallback ไป GAS base64 (รูปเท่านั้น)
-  try {
-    const token = await liff.getAccessToken();
-    return token;
-  } catch(e) { return null; }
-}
-
-async function uploadToDrive(file, folderId) {
-  // Step 1: initiate resumable session
-  const meta = JSON.stringify({name: file.name, parents: [folderId]});
-  const initRes = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable',
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + appConfig._driveToken,
-        'Content-Type': 'application/json; charset=UTF-8',
-        'X-Upload-Content-Type': file.type,
-        'X-Upload-Content-Length': file.size
-      },
-      body: meta
-    }
-  );
-
-  if (!initRes.ok) throw new Error('Drive init failed: ' + initRes.status);
-  const sessionUrl = initRes.headers.get('Location');
-  if (!sessionUrl) throw new Error('No session URL');
-
-  // Step 2: upload file
-  const uploadRes = await fetch(sessionUrl, {
-    method: 'PUT',
-    headers: {'Content-Type': file.type, 'Content-Length': file.size},
-    body: file
-  });
-
-  if (!uploadRes.ok) throw new Error('Drive upload failed: ' + uploadRes.status);
-  const json = await uploadRes.json();
-  return json.id; // fileId
-}
-
-async function uploadViaGASBase64(file, folderId) {
-  // Fallback สำหรับรูปภาพขนาดเล็ก หรือกรณีไม่มี Drive token
-  const b64 = await fileToBase64(file);
-  const res = await gasPost({
-    action:'uploadFile', folderId, fileName:file.name, mimeType:file.type, base64Data:b64
-  });
-  if (!res.success) throw new Error(res.error||'upload failed');
-  return res.fileId;
-}
-
-// เลือกวิธี upload อัตโนมัติ
-async function smartUpload(file, folderId) {
-  // ลอง Drive API ก่อน (รองรับทุกขนาดและทุก type)
-  if (appConfig._driveToken) {
-    try {
-      const fileId = await uploadToDrive(file, folderId);
-      // แจ้ง GAS ให้ set sharing
-      const reg = await gasPost({action:'registerUpload', fileId});
-      if (!reg.success) throw new Error(reg.error);
-      return reg.driveUrl;
-    } catch(e) {
-      console.warn('Drive API failed, fallback to GAS:', e.message);
-    }
-  }
-  // Fallback: GAS base64 (ใช้ได้กับรูป / ไฟล์เล็กกว่า 40MB)
-  const fileId = await uploadViaGASBase64(file, folderId);
-  const reg = await gasPost({action:'registerUpload', fileId});
-  return reg.success ? reg.driveUrl : 'https://lh3.googleusercontent.com/d/'+fileId;
-}
-
-function fileToBase64(file) {
-  return new Promise((res,rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-// ─── FILE PICK HANDLER ───
-function onFilePick(input, field, folderKey) {
-  // *** BUG FIX: capture folderId ทันทีก่อน reset input ***
-  const folderId = influencerData[folderKey];
-  const files = Array.from(input.files);
-  input.value = ''; // reset ทันทีหลัง capture
-
-  const grid = document.getElementById('thumbs-' + field);
-
-  files.forEach(file => {
-    // สร้าง thumb ก่อน (แสดงผล local)
-    const item = document.createElement('div');
-    item.className = 'thumb-item';
-
-    if (file.type.startsWith('image/')) {
-      const img = document.createElement('img');
-      img.src = URL.createObjectURL(file);
-      item.appendChild(img);
-    } else if (file.type.startsWith('video/')) {
-      // สำหรับวิดีโอ: แสดง icon + ชื่อไฟล์แทน (video element ใน grid เล็กเกินดู)
-      const box = document.createElement('div');
-      box.className = 'icon-box';
-      box.innerHTML = `<span>🎬</span><span>${file.name.slice(0,18)}</span>`;
-      item.appendChild(box);
-    } else {
-      const box = document.createElement('div');
-      box.className = 'icon-box';
-      box.innerHTML = `<span>📄</span><span>${file.name.slice(0,18)}</span>`;
-      item.appendChild(box);
-    }
-
-    const status = document.createElement('div');
-    status.className = 'thumb-status uploading';
-    status.textContent = 'กำลังอัพ…';
-    item.appendChild(status);
-    grid.appendChild(item);
-
-    // track pending
-    UP[field].pending++;
-    calcProgress();
-
-    // upload
-    smartUpload(file, folderId)
-      .then(url => {
-        UP[field].urls.push(url);
-        UP[field].pending--;
-        status.className = 'thumb-status done';
-        status.textContent = '✓';
-        calcProgress();
-      })
-      .catch(err => {
-        UP[field].pending--;
-        status.className = 'thumb-status error';
-        status.textContent = '✗';
-        console.error(field, 'upload error:', err);
-        calcProgress();
-      });
-  });
-}
-
-// ─── PROGRESS ───
+// ── PROGRESS ──
 function calcProgress() {
-  const checks = [
-    UP.final.urls.length > 0,
-    UP.footage.urls.length > 0,
-    UP.docs.urls.length > 0,
+  const ok = [
+    UP.final.urls.length>0,
+    UP.footage.urls.length>0,
+    UP.docs.urls.length>0,
     !!(document.getElementById('post1Platform').value && document.getElementById('post1Url').value),
     !!document.getElementById('bankName').value,
     !!document.getElementById('bankAccount').value.trim(),
     !!document.getElementById('accountName').value.trim(),
     !!document.getElementById('amount').value.trim(),
     !!document.getElementById('genCode').value.trim(),
-    UP.stat.urls.length > 0
+    UP.stat.urls.length>0
   ];
-  const pct = Math.round(checks.filter(Boolean).length / checks.length * 100);
-  document.getElementById('prog-fill').style.width = pct + '%';
-  document.getElementById('prog-text').textContent = pct + '%';
+  const pct = Math.round(ok.filter(Boolean).length/ok.length*100);
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-text').textContent  = pct+'%';
 }
 
-// ─── STEP 2 SUBMIT ───
+// ── STEP 2 SUBMIT ──
 async function submitStep2() {
   hideErr('s2-error');
-
   const pending = Object.values(UP).reduce((s,v)=>s+v.pending,0);
-  if (pending > 0) { showErr('s2-error','รอการอัพโหลดไฟล์ให้เสร็จก่อน'); return; }
-
+  if (pending>0) { showErr('s2-error','รอการอัพโหลดไฟล์ให้เสร็จก่อน'); return; }
   if (!UP.final.urls.length||!UP.footage.urls.length||!UP.docs.urls.length||!UP.stat.urls.length) {
     showErr('s2-error','กรุณาอัพโหลดไฟล์ในทุกหมวดให้ครบ'); return;
   }
@@ -636,7 +549,7 @@ async function submitStep2() {
   }
 
   const btn = document.getElementById('btn-submit2');
-  btn.disabled = true; btn.textContent = 'กำลังส่งงาน...';
+  btn.disabled=true; btn.textContent='กำลังส่งงาน...';
 
   try {
     const res = await gasPost({
@@ -650,22 +563,21 @@ async function submitStep2() {
     });
     if (!res.success) throw new Error(res.error||'ส่งงานไม่สำเร็จ');
 
-    // ดึง flex_json สำหรับ share
     try {
       const fj = await gasPost({action:'getFlexJson', lineId:lineProfile.userId});
       if (fj.success && fj.flexJson) savedFlexJson = JSON.parse(fj.flexJson);
     } catch(e) {}
 
     document.getElementById('success-text').textContent = appConfig.submit_success_text||'ส่งงานสำเร็จเรียบร้อย!';
-    document.getElementById('creator-ref').textContent  = 'รหัสอ้างอิง: ' + influencerData.creatorTag;
+    document.getElementById('creator-ref').textContent  = 'รหัสอ้างอิง: '+influencerData.creatorTag;
     showStep(3);
   } catch(err) {
     showErr('s2-error','เกิดข้อผิดพลาด: '+err.message);
-    btn.disabled = false; btn.textContent = 'ส่งงาน ✓';
+    btn.disabled=false; btn.textContent='ส่งงาน ✓';
   }
 }
 
-// ─── SHARE ───
+// ── SHARE ──
 async function doShare() {
   if (!savedFlexJson) { alert('ไม่พบ Flex Message'); return; }
   try {
@@ -679,12 +591,7 @@ async function doShare() {
 
 function closeLiff() { try { liff.closeWindow(); } catch(e) { window.close(); } }
 
-// ─── START ───
-window.addEventListener('load', async () => {
-  // ลอง get Drive token ล่วงหน้า (อาจไม่มี scope → null)
-  try { appConfig._driveToken = await liff.getAccessToken(); } catch(e) {}
-  init();
-});
+window.addEventListener('load', init);
 </script>
 </body>
 </html>
