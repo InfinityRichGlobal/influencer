@@ -317,10 +317,11 @@ async function uploadViaDriveAPI(file, folderId) {
 }
 
 async function uploadViaGASBase64(file, folderId) {
-  // chunk 6MB (หาร 3 ลงตัว) → base64 ~8MB ต่อ request — ปลอดภัยกว่า + retry
-  const CHUNK = 6 * 1024 * 1024; // 6291456 หาร 3 ลงตัว
+  // chunk 6MB (ทวีคูณ 256KB สำหรับ Drive resumable + หาร 3 ลงตัวสำหรับ base64)
+  const CHUNK = 6 * 1024 * 1024; // 6291456
   const total = Math.ceil(file.size / CHUNK);
   let uploadId = null;
+  let doneFileId = null;
 
   for (let i = 0; i < total; i++) {
     const slice = file.slice(i*CHUNK, Math.min((i+1)*CHUNK, file.size));
@@ -339,19 +340,20 @@ async function uploadViaGASBase64(file, folderId) {
       } catch(e) {
         lastErr = e.message;
       }
-      await new Promise(r=>setTimeout(r, 800)); // รอ 0.8 วิ ก่อน retry
+      await new Promise(r=>setTimeout(r, 800));
     }
     if (!res || !res.success) throw new Error('chunk '+i+'/'+total+': '+(lastErr||'fail'));
     uploadId = res.uploadId;
-    // แสดง progress chunk ใน debug
+    if (res.done && res.fileId) doneFileId = res.fileId; // chunk สุดท้ายจบแล้ว
     dbg('  chunk '+(i+1)+'/'+total+' ของ '+file.name, '#a78bfa');
   }
 
-  // finalize + retry
+  // finalize — แค่ set sharing (ไฟล์ถูกสร้างเสร็จแล้วจาก chunk สุดท้าย)
   let fres, ferr;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      fres = await gasPost({action:'finalizeUpload', uploadId, fileName:file.name, mimeType:file.type, folderId});
+      fres = await gasPost({action:'finalizeUpload', uploadId, fileId:doneFileId,
+        fileName:file.name, mimeType:file.type, folderId});
       if (fres.success) break;
       ferr = fres.error;
     } catch(e) { ferr = e.message; }
@@ -394,7 +396,7 @@ function hideUploadToast() {
 
 // ── debug logger (แสดงบนหน้าจอ) ──
 // เปิด/ปิด debug panel ที่นี่: true = แสดง, false = ซ่อน (โค้ด dbg ทั้งหมดยังอยู่ครบ)
-const DEBUG = true;
+const DEBUG = false;
 function dbg(msg, color) {
   if (!DEBUG) return;  // ปิดตา — ถ้าอยากใช้เปลี่ยนเป็น const DEBUG = true;
   console.log(msg);
