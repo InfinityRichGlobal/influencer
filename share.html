@@ -1,119 +1,133 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>แชร์ผลงาน</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<meta charset="utf-8"/>
+<title>Blissé • Share</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun',sans-serif;background:#f0fdf4;min-height:100vh;display:flex;align-items:center;justify-content:center}
-.wrap{max-width:360px;width:100%;margin:0 auto;padding:24px 16px;text-align:center}
-.card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.09);padding:32px 24px}
-.icon{font-size:52px;margin-bottom:12px}
-.title{font-size:18px;font-weight:700;color:#15803d;margin-bottom:8px}
-.sub{font-size:13px;color:#888;margin-bottom:20px}
-.btn{width:100%;padding:14px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px}
-.btn-green{background:#16a34a;color:#fff}
-.btn-gray{background:#f4f4f5;color:#555}
-.err{color:#dc2626;font-size:13px;margin-bottom:12px}
+:root{--bg:#f0fdf4;--card:#fff;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#16a34a;--shadow:0 10px 30px rgba(2,6,23,.08);--radius:14px}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;font-family:'Sarabun',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--ink)}
+.wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+.card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:var(--radius);padding:28px 22px;text-align:center}
+h3{margin:0 0 8px;font-size:1.1rem}
+p{margin:6px 0 0;color:var(--muted);font-size:.92rem}
+.spinner{width:38px;height:38px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:14px auto 6px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.spinner{width:40px;height:40px;border:3px solid #16a34a;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+.hint{margin-top:14px;font-size:.78rem;color:var(--muted);opacity:.85;word-break:break-all}
+.btn{margin-top:16px;width:100%;padding:13px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;font-family:inherit}
 </style>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 <div class="wrap">
-  <div class="card" id="view-loading">
-    <div class="spinner"></div>
-    <p style="font-size:14px;color:#888">กำลังเตรียมแชร์...</p>
-  </div>
-
-  <div class="card" id="view-ready" style="display:none">
-    <div class="icon">📤</div>
-    <div class="title">พร้อมแชร์ผลงาน</div>
-    <div class="sub">กดปุ่มด้านล่างเพื่อเลือกผู้รับใน LINE</div>
-    <button class="btn btn-green" onclick="doShare()">📤 เลือกผู้รับ / กลุ่ม</button>
-    <button class="btn btn-gray"  onclick="closePage()">ยกเลิก</button>
-  </div>
-
-  <div class="card" id="view-error" style="display:none">
-    <div class="icon">❌</div>
-    <p id="err-msg" class="err">เกิดข้อผิดพลาด</p>
-    <button class="btn btn-gray" onclick="closePage()">ปิด</button>
+  <div class="card">
+    <h3 id="head">กำลังเตรียมแชร์…</h3>
+    <div class="spinner" id="spin"></div>
+    <p id="msg">โปรดรอสักครู่</p>
+    <p class="hint" id="hint"></p>
   </div>
 </div>
-
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDptFsAWG5BinutE9Am9HrRD3oIDT79TI1zOZA5NBviO9zYi/exec';
-let flexMsg = null;
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDptFsAWG5BinutE9Am9HrRD3oIDT79TI1zOZA5NBviO9zYi/exec";
 
-async function gasPost(p) {
-  const r = await fetch(GAS_URL, {method:'POST', body:JSON.stringify(p)});
-  return r.json();
+const el=(id)=>document.getElementById(id);
+function setMsg(title,message,hint=""){
+  el("head").textContent=title;
+  el("msg").textContent=message;
+  el("hint").textContent=hint;
+  document.title=title;
+}
+function hideSpinner(){ const s=el("spin"); if(s) s.style.display='none'; }
+
+// อ่าน ?share= จากหลายที่ (query, hash, liff.state, redirectUri)
+function getShareParam(){
+  const q1=new URLSearchParams(location.search).get("share");
+  if(q1) return q1;
+  if(location.hash){
+    const hash=location.hash.replace(/^#\/?/,"");
+    const qs=hash.includes("?")?hash.split("?")[1]:"";
+    if(qs){ const q2=new URLSearchParams(qs).get("share"); if(q2) return q2; }
+  }
+  const state=new URLSearchParams(location.search).get("liff.state");
+  if(state){
+    try{ const s=decodeURIComponent(state); const qs=s.split("?")[1]||"";
+      const q3=new URLSearchParams(qs).get("share"); if(q3) return q3; }catch(e){}
+  }
+  const redirect=new URLSearchParams(location.search).get("liff.redirectUri");
+  if(redirect){
+    try{ const u=new URL(decodeURIComponent(redirect));
+      const q4=new URLSearchParams(u.search).get("share"); if(q4) return q4; }catch(e){}
+  }
+  const m=location.href.match(/[?&]share=([^&#]+)/);
+  return m?decodeURIComponent(m[1]):null;
 }
 
-function show(id) {
-  ['view-loading','view-ready','view-error'].forEach(v => {
-    document.getElementById(v).style.display = v===id ? 'block' : 'none';
-  });
+// POST แบบ form-urlencoded (ตรงกับ doPost ที่รองรับ e.parameter)
+async function gasPost(action, params={}){
+  const body=new URLSearchParams({action, ...params});
+  const res=await fetch(GAS_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+  return res.json();
 }
 
-function showErr(msg) {
-  document.getElementById('err-msg').textContent = msg;
-  show('view-error');
-}
+(async()=>{
+  const flexId=getShareParam();
+  if(!flexId){
+    hideSpinner();
+    setMsg("ไม่พบรหัสสำหรับแชร์","missing ?share=","ลิงก์ต้องมี ?share=FLEX_ID");
+    return;
+  }
 
-async function init() {
-  try {
-    // ดึง lineId จาก URL param
-    const params = new URLSearchParams(location.search);
-    const lineIdFromUrl = params.get('lineId');
-
-    const cfgRes = await gasPost({action:'getConfig'});
-    if (!cfgRes.success) throw new Error('โหลด config ไม่สำเร็จ');
-    const liffId = cfgRes.config['liff_id'];
-    if (!liffId) throw new Error('ไม่พบ liff_id');
+  try{
+    setMsg("กำลังเตรียมแชร์…","กำลังดึงการตั้งค่า");
+    const cfg=await gasPost("getConfig");
+    const liffId=cfg.liff_id_share || (cfg.config && cfg.config.liff_id_share) || "";
+    if(!liffId){
+      hideSpinner();
+      setMsg("การตั้งค่าไม่สมบูรณ์","ไม่พบ liff_id_share","กรอก liff_id_share ใน config");
+      return;
+    }
 
     await liff.init({liffId});
-    if (!liff.isLoggedIn()) { liff.login({redirectUri:location.href}); return; }
+    if(!liff.isLoggedIn()){ liff.login({redirectUri:location.href}); return; }
 
-    const profile = await liff.getProfile();
-    // ใช้ lineId จาก URL ก่อน (กรณีเปิดจาก Flex button ของคนอื่น)
-    // ถ้าไม่มีให้ใช้ lineId ของ user ที่ login อยู่
-    const targetId = lineIdFromUrl || profile.userId;
-
-    const res = await gasPost({action:'getFlexJson', lineId:targetId});
-    if (!res.success || !res.flexJson) throw new Error('ไม่พบข้อมูล Flex Message\nกรุณาส่งงานก่อน');
-
-    flexMsg = JSON.parse(res.flexJson);
-    show('view-ready');
-  } catch(err) {
-    showErr(err.message);
-  }
-}
-
-async function doShare() {
-  if (!flexMsg) return;
-  try {
-    if (!liff.isApiAvailable('shareTargetPicker')) {
-      throw new Error('ShareTargetPicker ไม่รองรับในอุปกรณ์นี้\nกรุณาเปิดใน LINE app');
+    setMsg("กำลังโหลดข้อมูล…","กำลังดึง Flex");
+    const data=await gasPost("getFlexById",{flexId});
+    if(data.status!=="success" || !data.flex){
+      hideSpinner();
+      setMsg("ไม่พบข้อมูล Flex","flex_id ผิดหรือหมดอายุ","flex_id: "+flexId);
+      return;
     }
-    const result = await liff.shareTargetPicker([flexMsg]);
-    if (result && result.status === 'success') {
-      alert('แชร์สำเร็จ! ✅');
-      closePage();
+
+    setMsg("เปิดหน้าต่างเลือกแชร์…","กำลังเปิด Share Target Picker");
+    if(!liff.isApiAvailable("shareTargetPicker")){
+      hideSpinner();
+      setMsg("อุปกรณ์ไม่รองรับ","ShareTargetPicker ใช้ไม่ได้","เปิดใน LINE app");
+      return;
     }
-    // status === 'cancel' → user ปิดเอง ไม่ทำอะไร
-  } catch(err) {
-    showErr('แชร์ไม่สำเร็จ: ' + err.message);
+
+    const result=await liff.shareTargetPicker([{
+      type:"flex",
+      altText:data.altText || "• Blissé •",
+      contents:data.flex
+    }]);
+
+    hideSpinner();
+    if(result && result.status==="success"){
+      setMsg("แชร์สำเร็จ! ✅","ขอบคุณครับ");
+      setTimeout(()=>{ try{liff.closeWindow();}catch(e){} }, 1200);
+    }else{
+      setMsg("พร้อมแชร์อีกครั้ง","กดปุ่มเพื่อเลือกผู้รับใหม่");
+      const b=document.createElement("button");
+      b.className="btn"; b.textContent="📤 เลือกผู้รับอีกครั้ง";
+      b.onclick=()=>location.reload();
+      el("msg").after(b);
+    }
+  }catch(err){
+    hideSpinner();
+    setMsg("เกิดข้อผิดพลาด",err.message||"ลองใหม่อีกครั้ง");
   }
-}
-
-function closePage() {
-  try { liff.closeWindow(); } catch(e) { window.close(); }
-}
-
-window.addEventListener('load', init);
+})();
 </script>
 </body>
 </html>
