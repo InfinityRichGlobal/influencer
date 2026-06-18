@@ -77,8 +77,8 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
 </head>
 <body>
 
-<!-- DEBUG PANEL — แสดงผลบนหน้าจอ ไม่ต้องใช้ DevTools -->
-<div id="debug-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:#1e1e1e;color:#d4d4d4;font-family:monospace;font-size:11px;padding:8px;z-index:9999;border-top:2px solid #16a34a">
+<!-- DEBUG PANEL — แสดงผลบนหน้าจอ ไม่ต้องใช้ DevTools (ซ่อนสนิทเมื่อ DEBUG=false) -->
+<div id="debug-panel" style="display:none!important;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:#1e1e1e;color:#d4d4d4;font-family:monospace;font-size:11px;padding:8px;z-index:9999;border-top:2px solid #16a34a">
   <div style="display:flex;justify-content:space-between;margin-bottom:6px">
     <span style="color:#16a34a;font-weight:bold">🔍 Debug Log</span>
     <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer">✕</button>
@@ -233,7 +233,13 @@ let   _Qbusy = false;
 function enqueue(task) { _Q.push(task); if (!_Qbusy) _drain(); }
 
 async function _drain() {
-  if (!_Q.length) { _Qbusy = false; return; }
+  if (!_Q.length) {
+    _Qbusy = false;
+    // คิวว่าง + ไม่มีไฟล์ค้าง = อัพครบ 100% → ซ่อน toast
+    const stillPending = Object.values(UP).reduce((s,v)=>s+v.pending,0);
+    if (stillPending === 0) hideUploadToast();
+    return;
+  }
   _Qbusy = true;
   const t = _Q.shift();
   try {
@@ -364,8 +370,7 @@ function blobToBase64(blob) {
   });
 }
 
-// ── upload toast (สีแดง มุมล่าง เอียง จางหายเอง) ──
-let _toastTimer = null;
+// ── upload toast (สีแดง มุมล่าง เอียง — ค้างไว้จนอัพครบ 100%) ──
 function showUploadToast(text) {
   let t = document.getElementById('upload-toast');
   if (!t) {
@@ -377,13 +382,14 @@ function showUploadToast(text) {
   t.classList.remove('hide');
   t.innerHTML = '<span class="dot"></span>' + (text || 'อดใจรอสักครู่ ระบบกำลังอัพโหลดข้อมูลของท่าน');
   t.style.display = 'flex';
+  // ไม่ตั้ง timer — toast จะค้างจนกว่า hideUploadToast() ถูกเรียกตอนอัพครบ
+}
 
-  // reset timer ทุกครั้งที่มีไฟล์ใหม่เข้ามา
-  if (_toastTimer) clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => {
-    t.classList.add('hide');
-    setTimeout(()=>{ if(t) t.style.display='none'; }, 400);
-  }, 4000); // โชว์ 4 วิ แล้วจางหาย
+function hideUploadToast() {
+  const t = document.getElementById('upload-toast');
+  if (!t) return;
+  t.classList.add('hide');
+  setTimeout(()=>{ if(t) t.style.display='none'; }, 400);
 }
 
 // ── debug logger (แสดงบนหน้าจอ) ──
@@ -395,7 +401,7 @@ function dbg(msg, color) {
   const panel = document.getElementById('debug-panel');
   const log   = document.getElementById('debug-log');
   if (!panel || !log) return;
-  panel.style.display = 'block';
+  panel.style.setProperty('display', 'block', 'important');
   const line = document.createElement('div');
   line.style.color     = color || '#d4d4d4';
   line.style.marginBottom = '3px';
@@ -501,8 +507,8 @@ function processFile(file, field, folderId, grid) {
   UP[field].pending++;
   calcProgress();
   dbg('อัพ: '+file.name+' ('+Math.round(file.size/1024)+'KB) → '+field, '#a78bfa');
-  // ไฟล์ใหญ่ (>5MB) เด้ง toast บอกให้รอ
-  if (file.size > 5 * 1024 * 1024) {
+  // ไฟล์ใหญ่ (>50MB) เด้ง toast ค้างไว้จนอัพครบ
+  if (file.size > 50 * 1024 * 1024) {
     showUploadToast('อดใจรอสักครู่ ระบบกำลังอัพโหลดข้อมูลของท่าน');
   }
   enqueue({file, field, folderId, el});
