@@ -197,6 +197,8 @@ let driveToken   = null;   // LIFF access token สำหรับ Drive API
 let influencerData = {};
 let step1Fields  = [];
 let savedFlexJson = null;
+let savedShareUrl = '';
+let savedFlexId   = '';
 
 const UP = {
   final:   {urls:[], pending:0, grid:null},
@@ -290,23 +292,48 @@ async function uploadViaDriveAPI(file, folderId) {
 }
 
 async function uploadViaGASBase64(file, folderId) {
-  // chunk ต้องเป็นทวีคูณของ 3 byte → base64 แต่ละก้อนไม่มี padding = → ต่อ string ได้ถูก
-  const CHUNK = 9 * 1024 * 1024; // 9MB หาร 3 ลงตัวพอดี
+  // chunk 6MB (หาร 3 ลงตัว) → base64 ~8MB ต่อ request — ปลอดภัยกว่า + retry
+  const CHUNK = 6 * 1024 * 1024; // 6291456 หาร 3 ลงตัว
   const total = Math.ceil(file.size / CHUNK);
   let uploadId = null;
+
   for (let i = 0; i < total; i++) {
     const slice = file.slice(i*CHUNK, Math.min((i+1)*CHUNK, file.size));
     const b64   = await blobToBase64(slice);
-    const res   = await gasPost({
-      action:'uploadChunk', uploadId, chunkIndex:i, totalChunks:total,
-      folderId, fileName:file.name, mimeType:file.type, base64Data:b64
-    });
-    if (!res.success) throw new Error(res.error||'chunk '+i+' failed');
+
+    // retry สูงสุด 3 ครั้งต่อ chunk
+    let res, lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        res = await gasPost({
+          action:'uploadChunk', uploadId, chunkIndex:i, totalChunks:total,
+          folderId, fileName:file.name, mimeType:file.type, base64Data:b64
+        });
+        if (res.success) break;
+        lastErr = res.error || 'chunk fail';
+      } catch(e) {
+        lastErr = e.message;
+      }
+      await new Promise(r=>setTimeout(r, 800)); // รอ 0.8 วิ ก่อน retry
+    }
+    if (!res || !res.success) throw new Error('chunk '+i+'/'+total+': '+(lastErr||'fail'));
     uploadId = res.uploadId;
+    // แสดง progress chunk ใน debug
+    dbg('  chunk '+(i+1)+'/'+total+' ของ '+file.name, '#a78bfa');
   }
-  const res = await gasPost({action:'finalizeUpload', uploadId, fileName:file.name, mimeType:file.type, folderId});
-  if (!res.success) throw new Error(res.error||'finalize failed');
-  return res.driveUrl;
+
+  // finalize + retry
+  let fres, ferr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      fres = await gasPost({action:'finalizeUpload', uploadId, fileName:file.name, mimeType:file.type, folderId});
+      if (fres.success) break;
+      ferr = fres.error;
+    } catch(e) { ferr = e.message; }
+    await new Promise(r=>setTimeout(r, 1000));
+  }
+  if (!fres || !fres.success) throw new Error('finalize: '+(ferr||'fail'));
+  return fres.driveUrl;
 }
 
 function blobToBase64(blob) {
@@ -605,10 +632,9 @@ async function submitStep2() {
     const res = await gasPost(payload);
     dbg('← submitWork response: '+JSON.stringify(res).slice(0,120), res.success?'#4ade80':'#f87171');
     if (!res.success) throw new Error(res.error||'ส่งงานไม่สำเร็จ');
-    try {
-      const fj = await gasPost({action:'getFlexJson', lineId:lineProfile.userId});
-      if (fj.success && fj.flexJson) savedFlexJson = JSON.parse(fj.flexJson);
-    } catch(e) {}
+    // เก็บ shareUrl (LIFF URL) จาก response
+    savedShareUrl = res.shareUrl || '';
+    savedFlexId   = res.flexId || '';
     document.getElementById('success-text').textContent = appConfig.submit_success_text||'ส่งงานสำเร็จเรียบร้อย!';
     document.getElementById('creator-ref').textContent  = 'รหัสอ้างอิง: '+influencerData.creatorTag;
     const showShare = String(appConfig.success_show_share||'TRUE').toUpperCase() !== 'FALSE';
@@ -621,13 +647,23 @@ async function submitStep2() {
 }
 
 // ── SHARE ──
+// เปิด LIFF share URL (liff.line.me/{liff_id_share}?share={flexId})
+// ShareTargetPicker ทำงานได้เฉพาะใน LIFF context จึงต้องเปิดหน้า share แยก
 async function doShare() {
-  if (!savedFlexJson) { alert('ไม่พบ Flex Message'); return; }
+  if (!savedShareUrl) {
+    alert('ไม่พบลิงก์แชร์ กรุณาตรวจสอบ liff_id_share ใน config');
+    return;
+  }
+  // เปิดในหน้าต่าง LIFF — ใช้ openWindow ถ้ามี, ไม่งั้น location
   try {
-    if (liff.isApiAvailable('shareTargetPicker')) {
-      await liff.shareTargetPicker([savedFlexJson]);
-    } else { alert('ShareTargetPicker ไม่รองรับในอุปกรณ์นี้'); }
-  } catch(e) { alert('แชร์ไม่สำเร็จ: '+e.message); }
+    if (liff.openWindow) {
+      liff.openWindow({ url: savedShareUrl, external: false });
+    } else {
+      location.href = savedShareUrl;
+    }
+  } catch(e) {
+    location.href = savedShareUrl;
+  }
 }
 function closeLiff() { try { liff.closeWindow(); } catch(e) { window.close(); } }
 window.addEventListener('load', init);
