@@ -265,17 +265,8 @@ async function _drain() {
 //          วิดีโอขนาดใหญ่ต้องมี Drive scope จึงจะผ่านได้
 // ═══════════════════════════════════════════════
 async function uploadFile(file, folderId) {
-  // ลอง Drive API ก่อน
-  if (driveToken) {
-    try {
-      return await uploadViaDriveAPI(file, folderId);
-    } catch(e) {
-      console.warn('[Drive API failed]', e.message, '→ fallback to GAS base64');
-      // ถ้า auth error แสดงว่าไม่มี scope → set driveToken=null ไม่ลองอีก
-      if (e.message.includes('401') || e.message.includes('403')) driveToken = null;
-    }
-  }
-  // Fallback: GAS base64 chunks — ไม่จำกัดขนาด
+  // อัพผ่าน GAS resumable เสมอ (browser ไม่มี Drive token จึงข้าม Drive API ตรง)
+  // GAS ใช้สิทธิ์ Drive ของเจ้าของระบบ stream เข้า Drive ทันที — ไฟล์ใหญ่ก็ผ่าน
   return await uploadViaGASBase64(file, folderId);
 }
 
@@ -396,7 +387,7 @@ function hideUploadToast() {
 
 // ── debug logger (แสดงบนหน้าจอ) ──
 // เปิด/ปิด debug panel ที่นี่: true = แสดง, false = ซ่อน (โค้ด dbg ทั้งหมดยังอยู่ครบ)
-const DEBUG = false;
+const DEBUG = true;
 function dbg(msg, color) {
   if (!DEBUG) return;  // ปิดตา — ถ้าอยากใช้เปลี่ยนเป็น const DEBUG = true;
   console.log(msg);
