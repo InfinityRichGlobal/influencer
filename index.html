@@ -143,9 +143,7 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <img id="guide-post1" class="guide-img" style="display:none"/>
     <select id="post1Platform" class="inp" style="margin-bottom:8px" onchange="calcProgress()"><option value="">-- เลือกช่องทาง --</option></select>
     <input id="post1Url" type="url" class="inp" placeholder="https://..." oninput="calcProgress()"/>
-  </div>
 
-  <div class="card">
     <div class="field-label"><span id="lbl-post2">ลิงก์โพสงาน ช่องที่ 2</span></div>
     <img id="guide-post2" class="guide-img" style="display:none"/>
     <select id="post2Platform" class="inp" style="margin-bottom:8px"><option value="">-- เลือกช่องทาง --</option></select>
@@ -156,31 +154,18 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <div class="field-label"><span id="lbl-bank">ธนาคาร</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-bank" class="guide-img" style="display:none"/>
     <select id="bankName" class="inp" onchange="calcProgress()"><option value="">-- เลือกธนาคาร --</option></select>
-  </div>
 
-  <div class="card">
     <div class="field-label"><span id="lbl-bankAccount">เลขบัญชี</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-bankAccount" class="guide-img" style="display:none"/>
-    <!-- type="text" + inputmode="numeric" รักษา 0 นำหน้า -->
     <input id="bankAccount" type="text" inputmode="numeric" class="inp" placeholder="กรอกเลขบัญชี" oninput="calcProgress()"/>
-  </div>
 
-  <div class="card">
     <div class="field-label"><span id="lbl-accountName">ชื่อเจ้าของบัญชี</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-accountName" class="guide-img" style="display:none"/>
     <input id="accountName" type="text" class="inp" placeholder="ชื่อ-นามสกุล" oninput="calcProgress()"/>
-  </div>
 
-  <div class="card">
     <div class="field-label"><span id="lbl-amount">จำนวนเงิน</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-amount" class="guide-img" style="display:none"/>
     <input id="amount" type="text" inputmode="decimal" class="inp" placeholder="0.00" oninput="calcProgress()"/>
-  </div>
-
-  <div class="card">
-    <div class="field-label"><span id="lbl-genCode">เจนโค้ด 90 วัน</span><span class="req-badge">จำเป็น</span></div>
-    <img id="guide-genCode" class="guide-img" style="display:none"/>
-    <input id="genCode" type="text" class="inp" placeholder="รหัส..." oninput="calcProgress()"/>
   </div>
 
   <div class="card">
@@ -190,6 +175,10 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <button class="file-btn" onclick="document.getElementById('inp-stat').click()">📎 เลือกรูป</button>
     <input type="file" id="inp-stat" multiple accept="image/*" style="display:none"/>
     <div id="thumbs-stat" class="thumb-grid"></div>
+
+    <div class="field-label"><span id="lbl-genCode">เจนโค้ด 90 วัน</span><span class="req-badge">จำเป็น</span></div>
+    <img id="guide-genCode" class="guide-img" style="display:none"/>
+    <input id="genCode" type="text" class="inp" placeholder="รหัส..." oninput="calcProgress()"/>
   </div>
 
   <div id="s2-error" class="err-box"></div>
