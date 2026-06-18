@@ -21,6 +21,8 @@ body{font-family:'Sarabun',sans-serif;background:#fff;color:#111;min-height:100v
 .s1-field{margin-bottom:14px}
 .s1-field:last-child{margin-bottom:0}
 .field-label{font-size:14px;font-weight:600;color:#111;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+/* เว้นระยะ label ตัวที่ 2+ ในการ์ดเดียวกัน (กันบรรทัดชนกัน) */
+.card .field-label ~ .field-label{margin-top:18px}
 .req-badge{font-size:11px;background:#fce7f3;color:#be185d;border-radius:3px;padding:1px 6px;font-weight:500}
 .sublabel{font-size:12px;color:#888;margin-bottom:8px}
 .guide-img{width:100%;border-radius:5px;margin-bottom:8px;border:1px solid #e5e7eb}
@@ -49,7 +51,7 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
 .btn-primary:hover{background:#15803d}
 .btn-primary:disabled{background:#86efac;cursor:not-allowed}
 .btn-secondary{width:100%;background:#f4f4f5;color:#444;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;padding:12px;border:none;border-radius:5px;cursor:pointer;margin-top:8px}
-.success-card{background:#fff;border-radius:10px;padding:32px 24px;text-align:center;width:100%}
+.success-card{background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.09);padding:32px 24px;text-align:center;width:100%}
 .success-icon{font-size:56px;margin-bottom:12px}
 .success-title{font-size:20px;font-weight:700;color:#16a34a;margin-bottom:8px}
 .success-ref{font-size:14px;font-weight:600;color:#16a34a;background:#f0fdf4;border-radius:5px;padding:10px;margin:10px 0}
@@ -141,7 +143,9 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <img id="guide-post1" class="guide-img" style="display:none"/>
     <select id="post1Platform" class="inp" style="margin-bottom:8px" onchange="calcProgress()"><option value="">-- เลือกช่องทาง --</option></select>
     <input id="post1Url" type="url" class="inp" placeholder="https://..." oninput="calcProgress()"/>
+  </div>
 
+  <div class="card">
     <div class="field-label"><span id="lbl-post2">ลิงก์โพสงาน ช่องที่ 2</span></div>
     <img id="guide-post2" class="guide-img" style="display:none"/>
     <select id="post2Platform" class="inp" style="margin-bottom:8px"><option value="">-- เลือกช่องทาง --</option></select>
@@ -152,22 +156,32 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <div class="field-label"><span id="lbl-bank">ธนาคาร</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-bank" class="guide-img" style="display:none"/>
     <select id="bankName" class="inp" onchange="calcProgress()"><option value="">-- เลือกธนาคาร --</option></select>
+  </div>
 
+  <div class="card">
     <div class="field-label"><span id="lbl-bankAccount">เลขบัญชี</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-bankAccount" class="guide-img" style="display:none"/>
     <!-- type="text" + inputmode="numeric" รักษา 0 นำหน้า -->
     <input id="bankAccount" type="text" inputmode="numeric" class="inp" placeholder="กรอกเลขบัญชี" oninput="calcProgress()"/>
+  </div>
 
+  <div class="card">
     <div class="field-label"><span id="lbl-accountName">ชื่อเจ้าของบัญชี</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-accountName" class="guide-img" style="display:none"/>
     <input id="accountName" type="text" class="inp" placeholder="ชื่อ-นามสกุล" oninput="calcProgress()"/>
+  </div>
 
+  <div class="card">
     <div class="field-label"><span id="lbl-amount">จำนวนเงิน</span><span class="req-badge">จำเป็น</span></div>
     <img id="guide-amount" class="guide-img" style="display:none"/>
     <input id="amount" type="text" inputmode="decimal" class="inp" placeholder="0.00" oninput="calcProgress()"/>
   </div>
 
-
+  <div class="card">
+    <div class="field-label"><span id="lbl-genCode">เจนโค้ด 90 วัน</span><span class="req-badge">จำเป็น</span></div>
+    <img id="guide-genCode" class="guide-img" style="display:none"/>
+    <input id="genCode" type="text" class="inp" placeholder="รหัส..." oninput="calcProgress()"/>
+  </div>
 
   <div class="card">
     <div class="field-label"><span id="lbl-stat">ภาพ Stat 7 วัน</span><span class="req-badge">จำเป็น</span></div>
@@ -176,10 +190,6 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
     <button class="file-btn" onclick="document.getElementById('inp-stat').click()">📎 เลือกรูป</button>
     <input type="file" id="inp-stat" multiple accept="image/*" style="display:none"/>
     <div id="thumbs-stat" class="thumb-grid"></div>
-
-    <div class="field-label"><span id="lbl-genCode">เจนโค้ด 90 วัน</span><span class="req-badge">จำเป็น</span></div>
-    <img id="guide-genCode" class="guide-img" style="display:none"/>
-    <input id="genCode" type="text" class="inp" placeholder="รหัส..." oninput="calcProgress()"/>
   </div>
 
   <div id="s2-error" class="err-box"></div>
@@ -191,7 +201,7 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
   <div class="success-card">
     <div class="success-icon">🎉</div>
     <div class="success-title">ส่งงานสำเร็จ!</div>
-    <p id="success-text" style="font-size:14px;color:#555;line-height:1.6;margin-bottom:8px"></p>
+    <p id="success-text" style="font-size:14px;color:#555;line-height:1.6;margin-bottom:8px;white-space:pre-line"></p>
     <div id="creator-ref" class="success-ref"></div>
     <p style="font-size:12px;color:#aaa;margin:8px 0 16px">ติดต่อสอบถามได้ที่แอดมินที่ท่านประสานงาน</p>
     <button id="btn-share" class="btn-primary" style="margin-top:0" onclick="doShare()">📤 แชร์ให้เพื่อน</button>
@@ -698,7 +708,10 @@ async function submitStep2() {
     // เก็บ shareUrl (LIFF URL) จาก response
     savedShareUrl = res.shareUrl || '';
     savedFlexId   = res.flexId || '';
-    document.getElementById('success-text').textContent = appConfig.submit_success_text||'ส่งงานสำเร็จเรียบร้อย!';
+    var successMsg = appConfig.submit_success_text || 'ส่งงานสำเร็จเรียบร้อย!';
+    // รองรับทั้ง newline จริง และ \n ที่เป็นตัวอักษร (จาก Sheets)
+    successMsg = successMsg.replace(/\\n/g, '\n');
+    document.getElementById('success-text').textContent = successMsg;
     document.getElementById('creator-ref').textContent  = 'รหัสอ้างอิง: '+influencerData.creatorTag;
     const showShare = String(appConfig.success_show_share).toUpperCase() !== 'FALSE';
     document.getElementById('btn-share').style.display = showShare ? '' : 'none';
