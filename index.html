@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ส่งงาน Influencer</title>
+<title>Let's Collaborate</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -54,18 +54,37 @@ select.inp{appearance:none;-webkit-appearance:none;background-image:url("data:im
 .success-title{font-size:20px;font-weight:700;color:#16a34a;margin-bottom:8px}
 .success-ref{font-size:14px;font-weight:600;color:#16a34a;background:#f0fdf4;border-radius:5px;padding:10px;margin:10px 0}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* ── upload toast ── */
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes toastOut{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,12px)}}
+.upload-toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%);
+  background:#dc2626;color:#fff;
+  font-family:'Sarabun',sans-serif;font-size:12.5px;font-style:italic;font-weight:500;
+  padding:10px 18px;border-radius:24px;
+  box-shadow:0 6px 20px rgba(220,38,38,.35);
+  z-index:99999;white-space:nowrap;max-width:90vw;
+  display:flex;align-items:center;gap:8px;
+  animation:toastIn .3s ease;
+}
+.upload-toast .dot{
+  width:8px;height:8px;border-radius:50%;background:#fff;
+  animation:toastpulse 1s ease-in-out infinite;
+}
+@keyframes toastpulse{0%,100%{opacity:.4}50%{opacity:1}}
+.upload-toast.hide{animation:toastOut .4s ease forwards}
 </style>
 </head>
 <body>
 
-//<!-- DEBUG PANEL — แสดงผลบนหน้าจอ ไม่ต้องใช้ DevTools -->
-//<div id="debug-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:#1e1e1e;color:#d4d4d4;font-family:monospace;font-size:11px;padding:8px;z-index:9999;border-top:2px solid #16a34a">
-//  <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-//    <span style="color:#16a34a;font-weight:bold">🔍 Debug Log</span>
-//    <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer">✕</button>
-//  </div>
-//  <div id="debug-log"></div>
-//</div>
+<!-- DEBUG PANEL — แสดงผลบนหน้าจอ ไม่ต้องใช้ DevTools -->
+<div id="debug-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;max-height:40vh;overflow-y:auto;background:#1e1e1e;color:#d4d4d4;font-family:monospace;font-size:11px;padding:8px;z-index:9999;border-top:2px solid #16a34a">
+  <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+    <span style="color:#16a34a;font-weight:bold">🔍 Debug Log</span>
+    <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer">✕</button>
+  </div>
+  <div id="debug-log"></div>
+</div>
 
 <!-- STEP 0 -->
 <div id="step-0" class="center-page active">
@@ -345,8 +364,33 @@ function blobToBase64(blob) {
   });
 }
 
+// ── upload toast (สีแดง มุมล่าง เอียง จางหายเอง) ──
+let _toastTimer = null;
+function showUploadToast(text) {
+  let t = document.getElementById('upload-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'upload-toast';
+    t.className = 'upload-toast';
+    document.body.appendChild(t);
+  }
+  t.classList.remove('hide');
+  t.innerHTML = '<span class="dot"></span>' + (text || 'อดใจรอสักครู่ ระบบกำลังอัพโหลดข้อมูลของท่าน');
+  t.style.display = 'flex';
+
+  // reset timer ทุกครั้งที่มีไฟล์ใหม่เข้ามา
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => {
+    t.classList.add('hide');
+    setTimeout(()=>{ if(t) t.style.display='none'; }, 400);
+  }, 4000); // โชว์ 4 วิ แล้วจางหาย
+}
+
 // ── debug logger (แสดงบนหน้าจอ) ──
+// เปิด/ปิด debug panel ที่นี่: true = แสดง, false = ซ่อน (โค้ด dbg ทั้งหมดยังอยู่ครบ)
+const DEBUG = false;
 function dbg(msg, color) {
+  if (!DEBUG) return;  // ปิดตา — ถ้าอยากใช้เปลี่ยนเป็น const DEBUG = true;
   console.log(msg);
   const panel = document.getElementById('debug-panel');
   const log   = document.getElementById('debug-log');
@@ -457,6 +501,10 @@ function processFile(file, field, folderId, grid) {
   UP[field].pending++;
   calcProgress();
   dbg('อัพ: '+file.name+' ('+Math.round(file.size/1024)+'KB) → '+field, '#a78bfa');
+  // ไฟล์ใหญ่ (>5MB) เด้ง toast บอกให้รอ
+  if (file.size > 5 * 1024 * 1024) {
+    showUploadToast('อดใจรอสักครู่ ระบบกำลังอัพโหลดข้อมูลของท่าน');
+  }
   enqueue({file, field, folderId, el});
 }
 
@@ -637,7 +685,7 @@ async function submitStep2() {
     savedFlexId   = res.flexId || '';
     document.getElementById('success-text').textContent = appConfig.submit_success_text||'ส่งงานสำเร็จเรียบร้อย!';
     document.getElementById('creator-ref').textContent  = 'รหัสอ้างอิง: '+influencerData.creatorTag;
-    const showShare = String(appConfig.success_show_share||'TRUE').toUpperCase() !== 'FALSE';
+    const showShare = String(appConfig.success_show_share).toUpperCase() !== 'FALSE';
     document.getElementById('btn-share').style.display = showShare ? '' : 'none';
     showStep(3);
   } catch(err) {
