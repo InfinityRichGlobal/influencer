@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Blissé Admin</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── หน้า center (loading / login / denied) ── */
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:32px 24px;max-width:380px;width:100%;text-align:center}
+.spinner{width:42px;height:42px;border:3px solid #e5e7eb;border-top-color:#16a34a;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.big-icon{font-size:52px;margin-bottom:12px}
+.title{font-size:20px;font-weight:700;color:#16a34a;margin-bottom:8px}
+.title.deny{color:#dc2626}
+.sub{font-size:13px;color:#888;line-height:1.6}
+.hint{margin-top:12px;font-size:12px;color:#aaa;word-break:break-all}
+
+/* ── หน้า dashboard (เฟสต่อไปจะเติม) ── */
+#dashboard{display:none;max-width:960px;margin:0 auto;padding:16px}
+.topbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.topbar .brand{font-size:18px;font-weight:700;color:#16a34a}
+.topbar .user{display:flex;align-items:center;gap:10px;font-size:13px;color:#444}
+.topbar .user img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.role-badge{font-size:11px;font-weight:600;border-radius:4px;padding:2px 8px}
+.role-badge.admin{background:#dcfce7;color:#15803d}
+.role-badge.viewer{background:#e0e7ff;color:#4338ca}
+.placeholder{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:48px 24px;text-align:center;color:#9ca3af;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- LOADING / LOGIN / DENIED -->
+<div id="gate" class="center">
+  <div class="card">
+    <div class="spinner" id="gate-spin"></div>
+    <div class="title" id="gate-title">กำลังตรวจสอบสิทธิ์…</div>
+    <p class="sub" id="gate-sub">โปรดรอสักครู่</p>
+    <p class="hint" id="gate-hint"></p>
+  </div>
+</div>
+
+<!-- DASHBOARD (เฟส 1 แสดงแค่ topbar + placeholder) -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="brand">Blissé Admin</div>
+    <div class="user">
+      <img id="u-photo" src="" alt=""/>
+      <div>
+        <div id="u-name" style="font-weight:600"></div>
+        <span id="u-role" class="role-badge"></span>
+      </div>
+    </div>
+  </div>
+  <div class="placeholder">
+    ✅ เข้าสู่ระบบสำเร็จ — เฟสถัดไปจะเพิ่มตารางงาน, ค้นหา, CRUD ที่นี่
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDptFsAWG5BinutE9Am9HrRD3oIDT79TI1zOZA5NBviO9zYi/exec';
+
+// LIFF ID — ใช้ตัวเดียวกับฟอร์มหลัก (login ผ่าน LINE)
+// จะดึงจาก getConfig (liff_id) เพื่อไม่ต้อง hardcode
+let LIFF_ID = '';
+let me = { lineId:'', name:'', role:'', photo:'' };
+
+const el = (id) => document.getElementById(id);
+
+function setGate(title, sub, hint, deny) {
+  el('gate-title').textContent = title;
+  el('gate-title').className = 'title' + (deny ? ' deny' : '');
+  el('gate-sub').textContent = sub || '';
+  el('gate-hint').textContent = hint || '';
+}
+function hideSpinner(){ const s=el('gate-spin'); if(s) s.style.display='none'; }
+
+async function gasPost(payload) {
+  const r = await fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams(payload)
+  });
+  return r.json();
+}
+
+(async () => {
+  try {
+    // 1) ดึง liff_id จาก config
+    setGate('กำลังโหลด…','กำลังดึงการตั้งค่า');
+    const cfg = await gasPost({action:'getConfig'});
+    LIFF_ID = (cfg.config && cfg.config.liff_id) || cfg.liff_id || '';
+    if (!LIFF_ID) { hideSpinner(); setGate('ตั้งค่าไม่ครบ','ไม่พบ liff_id','', true); return; }
+
+    // 2) LINE login
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    const profile = await liff.getProfile();
+    me.lineId = profile.userId;
+    me.name   = profile.displayName;
+    me.photo  = profile.pictureUrl || '';
+
+    // 3) เช็คสิทธิ์ฝั่ง GAS (whitelist)
+    setGate('กำลังตรวจสอบสิทธิ์…','');
+    const res = await gasPost({ action:'bk_login', lineId:me.lineId, lineName:me.name });
+
+    if (!res.success || !res.granted) {
+      // ไม่มีสิทธิ์ — แจ้ง + (GAS บันทึก log แล้ว)
+      hideSpinner();
+      setGate('ไม่มีสิทธิ์เข้าถึง', 'บัญชี LINE ของคุณไม่อยู่ในรายชื่อผู้ดูแล', 'LINE ID: '+me.lineId, true);
+      el('big') && (el('big').textContent = '🚫');
+      // เปลี่ยน spinner เป็นไอคอนห้าม
+      const card = document.querySelector('#gate .card');
+      const icon = document.createElement('div');
+      icon.className = 'big-icon'; icon.textContent = '🚫';
+      card.insertBefore(icon, card.firstChild);
+      return;
+    }
+
+    // 4) ผ่าน — เข้า dashboard
+    me.role = res.role || 'viewer';
+    me.name = res.name || me.name;
+    el('gate').style.display = 'none';
+    el('dashboard').style.display = 'block';
+    el('u-photo').src = me.photo;
+    el('u-name').textContent = me.name;
+    const rb = el('u-role');
+    rb.textContent = me.role === 'admin' ? 'ผู้ดูแล (admin)' : 'ผู้ชม (viewer)';
+    rb.className = 'role-badge ' + (me.role === 'admin' ? 'admin' : 'viewer');
+
+  } catch (err) {
+    hideSpinner();
+    setGate('เกิดข้อผิดพลาด', err.message || 'ลองใหม่อีกครั้ง', '', true);
+  }
+})();
+</script>
+</body>
+</html>
