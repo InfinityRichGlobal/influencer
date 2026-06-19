@@ -92,10 +92,11 @@ async function gasPost(payload) {
 
 (async () => {
   try {
-    // 1) ดึง liff_id จาก config
+    // 1) ดึง liff_id จาก config — ใช้ liff_id_backend ก่อน (ถ้ามี) ไม่งั้น fallback liff_id เดิม
     setGate('กำลังโหลด…','กำลังดึงการตั้งค่า');
     const cfg = await gasPost({action:'getConfig'});
-    LIFF_ID = (cfg.config && cfg.config.liff_id) || cfg.liff_id || '';
+    const c = cfg.config || cfg;
+    LIFF_ID = c.liff_id_backend || cfg.liff_id_backend || c.liff_id || cfg.liff_id || '';
     if (!LIFF_ID) { hideSpinner(); setGate('ตั้งค่าไม่ครบ','ไม่พบ liff_id','', true); return; }
 
     // 2) LINE login
