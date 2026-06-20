@@ -56,6 +56,27 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 .icon-btn.danger:hover{background:#fef2f2}
 .empty-row td{text-align:center;color:#9ca3af;padding:40px;font-size:13px}
 .loading-row td{text-align:center;color:#9ca3af;padding:30px}
+
+/* ── edit modal (การ์ดโปรไฟล์แก้ไขรวด) ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto}
+.modal-overlay.active{display:flex}
+.profile-modal{background:#fff;border-radius:14px;max-width:380px;width:100%;margin-top:30px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.profile-modal-head{background:#f0fdf4;padding:20px;text-align:center;position:relative}
+.profile-modal-head .avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1);background:#e5e7eb}
+.profile-modal-head .pname{margin-top:10px;font-weight:700;font-size:17px;color:#15803d}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;color:#888;cursor:pointer;line-height:1}
+.profile-modal-body{padding:18px 20px;max-height:60vh;overflow-y:auto}
+.pf-field{margin-bottom:14px}
+.pf-field label{display:block;font-size:12px;font-weight:600;color:#666;margin-bottom:5px}
+.pf-field input{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:9px 11px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
+.pf-field input:focus{border-color:#16a34a;background:#fff}
+.pf-field input:disabled{background:#f1f5f9;color:#9ca3af;cursor:not-allowed}
+.profile-modal-foot{padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px}
+.btn-modal{flex:1;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;padding:11px;border:none;border-radius:5px;cursor:pointer}
+.btn-modal.save{background:#16a34a;color:#fff}
+.btn-modal.save:hover{background:#15803d}
+.btn-modal.save:disabled{background:#86efac;cursor:not-allowed}
+.btn-modal.cancel{background:#f4f4f5;color:#444}
 </style>
 </head>
 <body>
@@ -92,6 +113,22 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
         <thead id="thead-row"><tr><th>กำลังโหลด...</th></tr></thead>
         <tbody id="tbody-rows"><tr class="loading-row"><td>กำลังโหลดข้อมูล…</td></tr></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL — การ์ดโปรไฟล์แก้ไขรวด -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="profile-modal">
+    <div class="profile-modal-head">
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+      <img class="avatar" id="pm-avatar" src="" alt=""/>
+      <div class="pname" id="pm-name"></div>
+    </div>
+    <div class="profile-modal-body" id="pm-fields"></div>
+    <div class="profile-modal-foot">
+      <button class="btn-modal cancel" onclick="closeEditModal()">ยกเลิก</button>
+      <button class="btn-modal save" id="pm-save-btn" onclick="saveEditModal()">💾 บันทึก</button>
     </div>
   </div>
 </div>
@@ -224,6 +261,7 @@ function renderTable() {
     });
     if (me.role === 'admin') {
       html += `<td><div class="row-actions">
+        <button class="icon-btn" onclick="openEditModal(${row._rowIndex})" title="แก้ไข">✏️</button>
         <button class="icon-btn danger" onclick="deleteRow(${row._rowIndex})" title="ลบ">🗑️</button>
       </div></td>`;
     }
@@ -282,6 +320,63 @@ async function deleteRow(rowIndex) {
     renderTable();
   } catch (err) {
     alert('ลบไม่สำเร็จ: ' + err.message);
+  }
+}
+
+// ══════════════════════ EDIT MODAL — การ์ดโปรไฟล์แก้ไขรวด ══════════════════════
+let EDIT_ROW_INDEX = null;
+
+function openEditModal(rowIndex) {
+  const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex);
+  if (!row) return;
+  EDIT_ROW_INDEX = rowIndex;
+
+  el('pm-avatar').src = row._photo || '';
+  el('pm-name').textContent = row.nickname || row.line_name || '—';
+
+  // เรียงฟิลด์ลงมา — editable ก่อน, ที่เหลือ (อ่านอย่างเดียว) ต่อท้าย
+  const editableFirst = [...TABLE_COLS].sort((a,b) => (b.editable - a.editable));
+  let html = '';
+  editableFirst.forEach(c => {
+    const val = row[c.key] ?? '';
+    html += `<div class="pf-field">
+      <label>${c.label}${c.editable ? '' : ' 🔒'}</label>
+      <input type="text" data-key="${c.key}" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable ? '' : 'disabled'}/>
+    </div>`;
+  });
+  el('pm-fields').innerHTML = html;
+  el('edit-modal').classList.add('active');
+}
+
+function closeEditModal() {
+  el('edit-modal').classList.remove('active');
+  EDIT_ROW_INDEX = null;
+}
+
+async function saveEditModal() {
+  if (!EDIT_ROW_INDEX) return;
+  const inputs = el('pm-fields').querySelectorAll('input:not(:disabled)');
+  const updates = {};
+  inputs.forEach(inp => { updates[inp.dataset.key] = inp.value; });
+
+  const btn = el('pm-save-btn');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  try {
+    const res = await gasPost({
+      action:'bk_update', lineId: me.lineId,
+      rowIndex: EDIT_ROW_INDEX, updates: JSON.stringify(updates)
+    });
+    if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
+
+    // sync ค่าใน TABLE_ROWS + re-render ตาราง
+    const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
+    if (row) Object.assign(row, updates);
+    renderTable();
+    closeEditModal();
+  } catch (err) {
+    alert('บันทึกไม่สำเร็จ: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 บันทึก';
   }
 }
 </script>
