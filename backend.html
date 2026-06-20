@@ -14,7 +14,7 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 
 /* ── หน้า center (loading / login / denied) ── */
 .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:32px 24px;max-width:380px;width:100%;text-align:center}
+.card{border-radius:10px;padding:32px 24px;max-width:380px;width:100%;text-align:center}
 .spinner{width:42px;height:42px;border:3px solid #e5e7eb;border-top-color:#16a34a;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .big-icon{font-size:52px;margin-bottom:12px}
@@ -25,17 +25,18 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 
 /* ── หน้า dashboard (เฟสต่อไปจะเติม) ── */
 #dashboard{display:none;max-width:960px;margin:0 auto;padding:16px}
-.topbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.topbar{border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .topbar .brand{font-size:18px;font-weight:700;color:#16a34a}
+.brand-logo{height:34px;max-width:160px;object-fit:contain}
 .topbar .user{display:flex;align-items:center;gap:10px;font-size:13px;color:#444}
 .topbar .user img{width:34px;height:34px;border-radius:50%;object-fit:cover}
-.role-badge{font-size:11px;font-weight:600;border-radius:4px;padding:2px 8px}
+.role-badge{font-size:11px;font-weight:600;border-radius:4px}
 .role-badge.admin{background:#dcfce7;color:#15803d}
 .role-badge.viewer{background:#e0e7ff;color:#4338ca}
 .placeholder{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:48px 24px;text-align:center;color:#9ca3af;font-size:14px}
 
 /* ── toolbar: search + filter ── */
-.toolbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar{border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .toolbar input,.toolbar select{font-family:'Sarabun',sans-serif;border:1.5px solid #e5e7eb;border-radius:5px;padding:8px 12px;font-size:13px;outline:none;background:#fafafa}
 .toolbar input:focus,.toolbar select:focus{border-color:#16a34a;background:#fff}
 .toolbar input{flex:1;min-width:160px}
@@ -44,6 +45,8 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 .search-wrap input{width:100%;padding-left:34px!important}
 #filter-status{display:none}
 .toolbar .count{font-size:12px;color:#888;white-space:nowrap}
+.btn-random{font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:5px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.btn-random:hover{background:#dcfce7}
 
 /* ── table ── */
 .table-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
@@ -138,6 +141,8 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 
 /* ── inline icon links in table cells (ติดกับตัวอักษร ไม่เว้นวรรค) ── */
 .cell-icon{margin-right:0;text-decoration:none;cursor:pointer;opacity:.8;font-size:13px}
+.cell-icon-btn{font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:4px 10px;cursor:pointer}
+.cell-icon-btn:hover{background:#dcfce7}
 .cell-icon:hover{opacity:1}
 .line-link{color:#16a34a;font-weight:600;cursor:pointer;white-space:nowrap}
 .line-link:hover{text-decoration:underline}
@@ -165,9 +170,9 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 .status-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin-bottom:18px}
 .status-card{
   background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,.06);
-  padding:16px 18px;cursor:pointer;border:1.5px solid #f1f5f9;
+  padding:5px 20px;cursor:pointer;
   display:flex;align-items:center;gap:12px;
-  border-left:4px solid transparent;
+  border-left:10px solid transparent;
   transition:transform .15s ease, box-shadow .15s ease;
 }
 .status-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
@@ -239,7 +244,7 @@ td:has(.doc-thumbs){max-width:none;overflow:visible}
 <!-- DASHBOARD (เฟส 1 แสดงแค่ topbar + placeholder) -->
 <div id="dashboard">
   <div class="topbar">
-    <div class="brand">Blissé Admin</div>
+    <div class="brand" id="brand-text">Blissé Admin</div>
     <div class="user">
       <img id="u-photo" src="" alt=""/>
       <div>
@@ -302,6 +307,12 @@ td:has(.doc-thumbs){max-width:none;overflow:visible}
   <div id="view-directory" style="display:none">
     <div class="toolbar">
       <div class="search-wrap"><i class="fa-solid fa-magnifying-glass search-ic"></i><input id="directory-search" type="text" placeholder="ค้นหาชื่อเล่น / TikTok..." oninput="renderDirectory()"/></div>
+      <select id="directory-sort" onchange="DIR_RANDOM_ORDER=null; renderDirectory()">
+        <option value="name">เรียง: ชื่อ A-Z</option>
+        <option value="newest">เรียง: ใหม่สุดก่อน</option>
+        <option value="oldest">เรียง: เก่าสุดก่อน</option>
+      </select>
+      <button type="button" class="btn-random" onclick="randomizeDirectory()"><i class="fa-solid fa-shuffle"></i> สุ่ม</button>
       <span class="count" id="directory-count"></span>
     </div>
     <div class="directory-grid" id="directory-grid">
@@ -408,6 +419,12 @@ async function gasPost(payload) {
     const c = cfg.config || cfg;
     LIFF_ID = c.liff_id_backend || cfg.liff_id_backend || c.liff_id || cfg.liff_id || '';
     if (!LIFF_ID) { hideSpinner(); setGate('ตั้งค่าไม่ครบ','ไม่พบ liff_id','', true); return; }
+
+    // โลโก้แทนข้อความ — ถ้าตั้งค่า backend_logo_url ไว้ในชีท config
+    const logoUrl = c.backend_logo_url || cfg.backend_logo_url || '';
+    if (logoUrl) {
+      el('brand-text').outerHTML = `<img src="${logoUrl}" class="brand-logo" alt="logo"/>`;
+    }
 
     // 2) LINE login
     await liff.init({ liffId: LIFF_ID });
@@ -531,6 +548,17 @@ function renderCellValue(c, val, row) {
   if (c.key === 'timestamp' || c.key === 'paid_date') {
     return val ? escapeHtml(formatTsCompact(val)) : '—';
   }
+  // เอกสาร/Stat (หลายรูป คั่นด้วย comma) — บังคับด้วย key เสมอ ไม่ต้องพึ่งค่า type จากชีท (กันบั๊กตั้งค่าผิด)
+  if (c.key === 'doc_urls' || c.key === 'stat_urls') {
+    const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
+    if (!urls.length) return '—';
+    return `<div class="doc-thumbs">${urls.map(u=>`<img class="row-thumb" src="${u}" onclick="openLightbox('${u}', event)"/>`).join('')}</div>`;
+  }
+  // เจนโค้ด — ในตารางงานไม่โชว์ค่า (ยาวเกินไปไม่มีประโยชน์) โชว์แค่ปุ่ม copy
+  if (c.key === 'gen_code') {
+    if (!val) return '—';
+    return `<button type="button" class="cell-icon-btn" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" title="คัดลอกเจนโค้ด"><i class="fa-regular fa-copy"></i> คัดลอก</button>`;
+  }
   // คะแนน — ทศนิยม 1 ตำแหน่ง
   if (c.type === 'stars') {
     const n = Number(val) || 0;
@@ -544,12 +572,6 @@ function renderCellValue(c, val, row) {
   // สลิป (รูปเดียว)
   if (c.type === 'image') {
     return val ? `<img class="row-thumb" src="${val}" onclick="openLightbox('${val}', event)"/>` : '—';
-  }
-  // เอกสาร/Stat (หลายรูป คั่นด้วย comma) — แสดงเป็นแถวทรัมเนลเล็ก
-  if (c.type === 'images') {
-    const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
-    if (!urls.length) return '—';
-    return `<div class="doc-thumbs">${urls.map(u=>`<img class="row-thumb" src="${u}" onclick="openLightbox('${u}', event)"/>`).join('')}</div>`;
   }
   // ชื่อ LINE — แทรกปุ่ม 💬 เปิด LINE modal
   if (c.key === 'line_name' && row) {
@@ -573,8 +595,8 @@ function renderCellValue(c, val, row) {
     const safe = escapeHtml(String(val));
     return `<a class="cell-icon" href="https://www.tiktok.com/@${uname}" target="_blank" onclick="event.stopPropagation()"><i class="fa-brands fa-tiktok"></i></a>${safe}`;
   }
-  // เจนโค้ด / เลขบัญชี — ไอคอน copy อยู่หน้า
-  if ((c.key === 'gen_code' || c.key === 'bank_account') && val) {
+  // เลขบัญชี — ไอคอน copy อยู่หน้า (ยังโชว์ค่าปกติ เพราะต้องอ่านได้)
+  if (c.key === 'bank_account' && val) {
     const safe = escapeHtml(String(val));
     return `<span class="cell-icon" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" style="cursor:pointer"><i class="fa-regular fa-copy"></i></span>${safe}`;
   }
@@ -809,8 +831,8 @@ async function openEditModal(rowIndex, mode) {
             <input type="range" class="rating-slider" min="0" max="5" step="0.1" value="${n}"
               oninput="onRatingSlide(this, '${c.key}')" ${c.editable?'':'disabled'}/>
           </div></div>`;
-      } else if (c.type === 'images') {
-        // doc_urls / stat_urls — แกลเลอรี่หลายรูป (อ่านอย่างเดียว)
+      } else if (c.key === 'doc_urls' || c.key === 'stat_urls') {
+        // doc_urls / stat_urls — แกลเลอรี่หลายรูป บังคับด้วย key เสมอ (กันบั๊กตั้ง type ผิดในชีท)
         const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
         if (urls.length) {
           let imgs = urls.map(u => `<img src="${u}" onclick="openLightbox('${u}', event)"/>`).join('');
@@ -1162,17 +1184,45 @@ async function loadDirectory() {
     if (!res.success) throw new Error(res.error || 'โหลดฐานข้อมูลไม่สำเร็จ');
     DIR_LOADED = true;
     DIR_LIST = res.list;
+    DIR_RANDOM_ORDER = null;
     renderDirectory();
   } catch (err) {
     el('directory-grid').innerHTML = `<div class="placeholder"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</div>`;
   }
 }
 
+let DIR_RANDOM_ORDER = null; // เก็บลำดับสุ่มไว้ (null = ไม่ได้สุ่ม ใช้ sort ปกติ)
+
+function randomizeDirectory() {
+  const shuffled = [...DIR_LIST];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  DIR_RANDOM_ORDER = shuffled;
+  renderDirectory();
+}
+
 function renderDirectory() {
   const q = el('directory-search').value.trim().toLowerCase();
-  const filtered = !q ? DIR_LIST : DIR_LIST.filter(d =>
+  const sortBy = el('directory-sort').value;
+
+  let base = DIR_RANDOM_ORDER || DIR_LIST;
+  let filtered = !q ? [...base] : base.filter(d =>
     String(d.nickname||'').toLowerCase().includes(q) || String(d.tiktok||'').toLowerCase().includes(q)
   );
+
+  // เรียงตาม dropdown — เฉพาะตอนไม่ได้อยู่ในโหมดสุ่ม (สุ่มแล้วคงลำดับไว้)
+  if (!DIR_RANDOM_ORDER) {
+    if (sortBy === 'name') {
+      filtered.sort((a,b) => String(a.nickname||'').localeCompare(String(b.nickname||''), 'th'));
+    } else if (sortBy === 'newest') {
+      filtered.sort((a,b) => String(b.timestamp||'').localeCompare(String(a.timestamp||'')));
+    } else if (sortBy === 'oldest') {
+      filtered.sort((a,b) => String(a.timestamp||'').localeCompare(String(b.timestamp||'')));
+    }
+  }
+
   el('directory-count').textContent = filtered.length + ' / ' + DIR_LIST.length + ' คน';
 
   if (!filtered.length) {
