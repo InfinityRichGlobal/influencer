@@ -61,17 +61,17 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 /* ── edit modal (การ์ดโปรไฟล์แก้ไขรวด) ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto}
 .modal-overlay.active{display:flex}
-.profile-modal{background:#fff;border-radius:20px;max-width:380px;width:100%;margin-top:24px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25)}
-.profile-modal-head{background:#fff;padding:24px 20px 18px;text-align:center;position:relative;border-bottom:1px solid #f3f4f6}
-.profile-modal-head .avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 0 0 3px #dcfce7, 0 4px 14px rgba(0,0,0,.12);background:#e5e7eb}
-.profile-modal-head .pname{margin-top:12px;font-weight:800;font-size:18px;color:#111}
-.modal-close{position:absolute;top:14px;right:16px;background:#f4f4f5;border:none;width:28px;height:28px;border-radius:50%;font-size:15px;color:#777;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
-.modal-close:hover{background:#e5e7eb}
+.profile-modal{background:#fff;border-radius:24px;max-width:380px;width:100%;margin-top:24px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.profile-modal-head{background:linear-gradient(180deg,#f0fdf4 0%,#ffffff 100%);padding:30px 20px 20px;text-align:center;position:relative}
+.profile-modal-head .avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 0 0 3px #bbf7d0, 0 10px 24px rgba(22,163,74,.2);background:#e5e7eb}
+.profile-modal-head .pname{margin-top:14px;font-weight:800;font-size:19px;color:#111;letter-spacing:-.2px}
+.modal-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.9);backdrop-filter:blur(4px);border:none;width:30px;height:30px;border-radius:50%;font-size:15px;color:#777;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.modal-close:hover{background:#fff;color:#333}
 .profile-modal-body{padding:18px 20px;max-height:55vh;overflow-y:auto}
 .pf-field{margin-bottom:14px}
 .pf-field label{display:block;font-size:11.5px;font-weight:700;color:#9ca3af;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
-.pf-field input{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:10px 12px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
-.pf-field input:focus{border-color:#16a34a;background:#fff}
+.pf-field input{width:100%;border:none;box-shadow:inset 0 0 0 1.5px #e5e7eb;border-radius:12px;padding:11px 13px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#f8fafc;transition:box-shadow .15s ease}
+.pf-field input:focus{box-shadow:inset 0 0 0 2px #16a34a;background:#fff}
 .pf-field input:disabled{background:#f8fafc;color:#9ca3af;cursor:not-allowed}
 .profile-modal-foot{padding:14px 20px 18px;display:flex;gap:10px}
 .btn-modal{flex:1;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;padding:12px;border:none;border-radius:12px;cursor:pointer}
@@ -84,10 +84,21 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 /* ── status badge ในการ์ดโปรไฟล์ (ทางลัดเห็นสถานะทันที) ── */
 .pm-status-badge{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px}
 
-/* ── view tabs ── */
-.view-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.view-tab{font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;background:#fff;color:#666;box-shadow:0 1px 6px rgba(0,0,0,.07)}
-.view-tab.active{background:#16a34a;color:#fff}
+/* ── view tabs — icon tile โมเดิร์น ── */
+.view-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.view-tab{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  font-family:'Sarabun',sans-serif;font-size:11.5px;font-weight:700;
+  padding:14px 4px;border:none;border-radius:16px;cursor:pointer;
+  background:#fff;color:#9ca3af;box-shadow:0 1px 6px rgba(0,0,0,.06);
+  transition:transform .15s ease, box-shadow .15s ease, background .2s ease, color .2s ease;
+}
+.view-tab .tab-icon{font-size:22px;line-height:1}
+.view-tab:hover:not(.active){background:#f9fafb;transform:translateY(-1px)}
+.view-tab.active{
+  background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;
+  box-shadow:0 8px 20px rgba(22,163,74,.35);transform:translateY(-2px);
+}
 
 /* ── ranking cards ── */
 .rank-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
@@ -106,8 +117,8 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 
 /* ── select in modal ── */
-.pf-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:10px 12px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
-.pf-field select:focus{border-color:#16a34a;background:#fff}
+.pf-field select{width:100%;border:none;box-shadow:inset 0 0 0 1.5px #e5e7eb;border-radius:12px;padding:11px 13px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#f8fafc}
+.pf-field select:focus{box-shadow:inset 0 0 0 2px #16a34a;background:#fff}
 
 /* ── slip upload ── */
 .slip-box{display:flex;align-items:center;gap:10px}
@@ -129,15 +140,15 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 
 /* ── quick actions — ไอคอนวงกลมแบบแอป (โมเดิร์น) ── */
 .quick-actions{padding:16px 20px 4px}
-.action-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px}
-.action-icon{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;cursor:pointer;background:none;border:none;font-family:'Sarabun',sans-serif;padding:0}
-.action-icon .circle{width:48px;height:48px;border-radius:50%;background:#f4f4f5;display:flex;align-items:center;justify-content:center;font-size:19px;transition:transform .15s ease, background .15s ease}
-.action-icon:hover .circle{transform:translateY(-2px);background:#ececec}
-.action-icon .cap{font-size:10px;color:#666;font-weight:600;text-align:center;line-height:1.2;max-width:60px}
-.action-icon.green .circle{background:#dcfce7;color:#15803d}
-.action-icon.green:hover .circle{background:#bbf7d0}
-.action-icon.blue .circle{background:#dbeafe;color:#1e40af}
-.action-icon.blue:hover .circle{background:#bfdbfe}
+.action-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 8px}
+.action-icon{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;cursor:pointer;background:none;border:none;font-family:'Sarabun',sans-serif;padding:0}
+.action-icon .circle{width:52px;height:52px;border-radius:50%;background:#f4f4f5;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.05);transition:transform .15s ease, box-shadow .15s ease}
+.action-icon:hover .circle{transform:translateY(-3px) scale(1.04);box-shadow:0 6px 14px rgba(0,0,0,.12)}
+.action-icon .cap{font-size:10px;color:#6b7280;font-weight:700;text-align:center;line-height:1.2;max-width:62px}
+.action-icon.green .circle{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#15803d}
+.action-icon.green:hover .circle{box-shadow:0 6px 14px rgba(22,163,74,.25)}
+.action-icon.blue .circle{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1e40af}
+.action-icon.blue:hover .circle{box-shadow:0 6px 14px rgba(30,64,175,.2)}
 
 /* ── quick-link-btn — ยังใช้ใน LINE modal (ปุ่มเปิดลิงก์แชร์) ── */
 .quick-link-btn{display:block;text-align:center;background:#f0fdf4;color:#15803d;border-radius:9px;padding:10px 6px;font-size:13px;font-weight:700;text-decoration:none;border:1px solid #bbf7d0}
@@ -232,10 +243,10 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
   </div>
 
   <div class="view-tabs">
-    <button class="view-tab active" id="tab-table" onclick="switchView('table')">📋 ตารางงาน</button>
-    <button class="view-tab" id="tab-rank" onclick="switchView('rank')">🏆 Ranking</button>
-    <button class="view-tab" id="tab-finance" onclick="switchView('finance')">💰 การเงิน</button>
-    <button class="view-tab" id="tab-directory" onclick="switchView('directory')">👥 ฐานข้อมูล</button>
+    <button class="view-tab active" id="tab-table" onclick="switchView('table')"><span class="tab-icon">📋</span><span>ตารางงาน</span></button>
+    <button class="view-tab" id="tab-rank" onclick="switchView('rank')"><span class="tab-icon">🏆</span><span>Ranking</span></button>
+    <button class="view-tab" id="tab-finance" onclick="switchView('finance')"><span class="tab-icon">💰</span><span>การเงิน</span></button>
+    <button class="view-tab" id="tab-directory" onclick="switchView('directory')"><span class="tab-icon">👥</span><span>ฐานข้อมูล</span></button>
   </div>
 
   <div id="view-table">
@@ -436,6 +447,9 @@ async function loadTable() {
     const res = await gasPost({ action:'bk_list', lineId: me.lineId });
     if (!res.success) throw new Error(res.error || 'โหลดข้อมูลไม่สำเร็จ');
     TABLE_COLS = res.columns;
+    // ย้ายคอลัมน์เวลาไปท้ายสุด — ให้ข้อมูลสำคัญ (ชื่อ/TikTok) เห็นก่อน
+    const tsIdx = TABLE_COLS.findIndex(c => c.key === 'timestamp');
+    if (tsIdx > -1) TABLE_COLS.push(TABLE_COLS.splice(tsIdx, 1)[0]);
     TABLE_ROWS = res.rows;
     buildHeader();
     buildStatusFilter();
@@ -650,10 +664,12 @@ async function deleteRow(rowIndex) {
 let EDIT_ROW_INDEX = null;
 let EDIT_TARGET_LINEID = null;
 let CURRENT_MODAL_ROW = null; // เก็บ row เต็มล่าสุดที่โหลดใน modal (ใช้ส่งต่อให้ปุ่มส่งข้อความ)
+let CURRENT_MODAL_MODE = 'full'; // เก็บ mode ที่เปิด modal ไว้ — ใช้รู้ว่าต้องรีเฟรชหน้าไหนทันทีหลังบันทึก
 let EDIT_COLS = [];
 
 async function openEditModal(rowIndex, mode) {
   mode = mode || 'full'; // 'full' | 'finance' | 'ranking'
+  CURRENT_MODAL_MODE = mode;
   EDIT_ROW_INDEX = rowIndex;
   el('pm-fields').innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">กำลังโหลด...</p>';
   el('pm-quick').innerHTML = '';
@@ -877,9 +893,17 @@ async function saveEditModal() {
     const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
     if (row) Object.assign(row, updates);
     renderTable();
-    // ข้อมูลอาจเปลี่ยน (สถานะ/คะแนน) → บังคับโหลดใหม่ครั้งถัดไปที่เปิดแท็บ
+
+    // รีเฟรชหน้าที่กำลังเปิดดูอยู่ทันที (ไม่รอจนกว่าจะสลับแท็บ) — แก้บั๊กไม่เรียลไทม์
     FIN_LOADED = false;
     RANK_LOADED = false;
+    DIR_LOADED = false;
+    if (CURRENT_MODAL_MODE === 'finance') {
+      await loadFinance();
+    } else if (CURRENT_MODAL_MODE === 'ranking') {
+      await loadRanking();
+    }
+
     closeEditModal();
   } catch (err) {
     alert('บันทึกไม่สำเร็จ: ' + err.message);
