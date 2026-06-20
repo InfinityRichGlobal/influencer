@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun',sans-serif;background:#f7f8fa;min-height:100vh;-webkit-font-smoothing:antialiased}
+body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:100vh;-webkit-font-smoothing:antialiased}
 
 /* ── หน้า center (loading / login / denied) ── */
 .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -24,7 +24,7 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;min-height:100vh;-webki
 
 /* ── หน้า dashboard (เฟสต่อไปจะเติม) ── */
 #dashboard{display:none;max-width:960px;margin:0 auto;padding:16px}
-.topbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.topbar{background:#fff;border-radius:10px;padding:10px 15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .topbar .brand{font-size:18px;font-weight:700;color:#16a34a}
 .topbar .user{display:flex;align-items:center;gap:10px;font-size:13px;color:#444}
 .topbar .user img{width:34px;height:34px;border-radius:50%;object-fit:cover}
@@ -155,6 +155,39 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 
 /* ── LINE modal ── */
 .line-modal{background:#fff;border-radius:14px;max-width:340px;width:100%;margin-top:60px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+
+/* ── row thumbnail (รูปโปรไฟล์หน้าแถว — ไม่กระทบความสูงแถว) ── */
+.row-thumb{width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;display:block;background:#e5e7eb;flex-shrink:0}
+.thumb-cell{padding:5px 8px!important;width:36px}
+
+/* ── lightbox (ขยายรูป) ── */
+.lightbox-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out}
+.lightbox-overlay.active{display:flex}
+.lightbox-overlay img{max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+
+/* ── gear icon manage button ── */
+.gear-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:4px}
+.gear-btn:hover{background:#f1f5f9}
+
+/* ── image gallery (doc_urls / stat_urls ใน modal) ── */
+.img-gallery{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
+.img-gallery img{width:64px;height:64px;border-radius:6px;object-fit:cover;cursor:pointer;border:1px solid #e5e7eb;flex-shrink:0}
+.img-gallery.empty{color:#9ca3af;font-size:12px;padding:8px 0}
+
+/* ── copy-only button (gen_code ในโหมดการเงิน) ── */
+.copy-only-btn{width:100%;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:10px;border:1.5px dashed #86efac;border-radius:6px;background:#f0fdf4;color:#16a34a;cursor:pointer}
+.copy-only-btn:hover{background:#dcfce7}
+
+/* ── tiktok link name ── */
+.name-link{color:inherit;text-decoration:none}
+.name-link:hover{text-decoration:underline}
+
+/* ── directory grid ── */
+.directory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.directory-card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:14px 8px;text-align:center;cursor:pointer}
+.directory-card img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#e5e7eb;margin-bottom:8px}
+.directory-card .dname{font-weight:700;font-size:13px;color:#1F1F1F}
+.directory-card .dtiktok{font-size:11px;color:#888}
 </style>
 </head>
 <body>
@@ -186,6 +219,7 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
     <button class="view-tab active" id="tab-table" onclick="switchView('table')">📋 ตารางงาน</button>
     <button class="view-tab" id="tab-rank" onclick="switchView('rank')">🏆 Ranking</button>
     <button class="view-tab" id="tab-finance" onclick="switchView('finance')">💰 การเงิน</button>
+    <button class="view-tab" id="tab-directory" onclick="switchView('directory')">👥 ฐานข้อมูล</button>
   </div>
 
   <div id="view-table">
@@ -222,12 +256,22 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
       <div class="table-scroll">
         <table>
           <thead><tr>
-            <th>ชื่อเล่น</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>ชื่อบัญชี</th>
-            <th>จำนวนเงิน</th><th>สถานะ</th><th>สลิป</th><th>วันที่จ่าย</th><th>โน้ต</th><th>จัดการ</th>
+            <th></th><th>สถานะ</th><th></th><th>ชื่อเล่น</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>ชื่อบัญชี</th>
+            <th>จำนวนเงิน</th><th>สลิป</th><th>วันที่จ่าย</th><th>โน้ต</th>
           </tr></thead>
-          <tbody id="finance-rows"><tr class="loading-row"><td colspan="10">กำลังโหลดข้อมูล…</td></tr></tbody>
+          <tbody id="finance-rows"><tr class="loading-row"><td colspan="11">กำลังโหลดข้อมูล…</td></tr></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <div id="view-directory" style="display:none">
+    <div class="toolbar">
+      <input id="directory-search" type="text" placeholder="🔍 ค้นหาชื่อเล่น / TikTok..." oninput="renderDirectory()"/>
+      <span class="count" id="directory-count"></span>
+    </div>
+    <div class="directory-grid" id="directory-grid">
+      <div class="placeholder">กำลังโหลด...</div>
     </div>
   </div>
 
@@ -270,6 +314,11 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
   </div>
 </div>
 
+<!-- LIGHTBOX — ขยายรูปเต็มจอ -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt=""/>
+</div>
+
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDptFsAWG5BinutE9Am9HrRD3oIDT79TI1zOZA5NBviO9zYi/exec';
 
@@ -277,6 +326,17 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDpt
 // จะดึงจาก getConfig (liff_id) เพื่อไม่ต้อง hardcode
 let LIFF_ID = '';
 let me = { lineId:'', name:'', role:'', photo:'' };
+
+// ── Lightbox — ขยายรูปเต็มจอ ──
+function openLightbox(url, ev) {
+  if (ev) ev.stopPropagation();
+  if (!url) return;
+  el('lightbox-img').src = url;
+  el('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  el('lightbox').classList.remove('active');
+}
 
 const el = (id) => document.getElementById(id);
 
@@ -393,7 +453,7 @@ function statusBadge(val) {
 }
 
 function buildHeader() {
-  let html = '<tr>';
+  let html = '<tr><th></th>'; // คอลัมน์รูปโปรไฟล์หน้าแถว (ทุกหน้า)
   TABLE_COLS.forEach(c => { html += `<th>${c.label}</th>`; });
   if (me.role === 'admin') html += '<th>จัดการ</th>';
   html += '</tr>';
@@ -483,13 +543,14 @@ function renderTable() {
   el('row-count').textContent = filtered.length + ' / ' + TABLE_ROWS.length + ' รายการ';
 
   if (!filtered.length) {
-    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="${TABLE_COLS.length+1}">ไม่พบข้อมูล</td></tr>`;
+    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="${TABLE_COLS.length+2}">ไม่พบข้อมูล</td></tr>`;
     return;
   }
 
   let html = '';
   filtered.forEach(row => {
     html += `<tr data-row="${row._rowIndex}">`;
+    html += `<td class="thumb-cell">${row._profileUrl ? `<img class="row-thumb" src="${row._profileUrl}" onclick="openLightbox('${row._profileUrl}', event)"/>` : ''}</td>`;
     TABLE_COLS.forEach(c => {
       const val = row[c.key] ?? '';
       // inline-edit เฉพาะ type text (select/stars/image แก้ผ่าน modal เท่านั้น — ใช้งานง่ายกว่า)
@@ -573,7 +634,8 @@ let EDIT_ROW_INDEX = null;
 let EDIT_TARGET_LINEID = null;
 let EDIT_COLS = [];
 
-async function openEditModal(rowIndex) {
+async function openEditModal(rowIndex, mode) {
+  mode = mode || 'full'; // 'full' | 'finance' | 'ranking'
   EDIT_ROW_INDEX = rowIndex;
   el('pm-fields').innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">กำลังโหลด...</p>';
   el('pm-quick').innerHTML = '';
@@ -588,8 +650,16 @@ async function openEditModal(rowIndex) {
     EDIT_COLS = res.columns;
     EDIT_TARGET_LINEID = row._lineId;
 
-    el('pm-avatar').src = row._photo || '';
-    el('pm-name').textContent = row.nickname || row.line_name || '—';
+    el('pm-avatar').src = row._photo || row.line_profile_drive_url || '';
+
+    // ชื่อ — กดแล้วไปยัง TikTok ได้ (เหมือนในตาราง)
+    const nameText = row.nickname || row.line_name || '—';
+    if (row.tiktok) {
+      const uname = String(row.tiktok).replace(/^@/,'');
+      el('pm-name').innerHTML = `<a class="name-link" href="https://www.tiktok.com/@${uname}" target="_blank">${escapeHtml(nameText)}</a>`;
+    } else {
+      el('pm-name').textContent = nameText;
+    }
 
     // วันที่ร่วมงานมาแล้วกี่วัน (จาก timestamp ถึงวันนี้)
     if (row.timestamp) {
@@ -600,7 +670,7 @@ async function openEditModal(rowIndex) {
       }
     }
 
-    // ปุ่ม quick-action แบบ Flex — 4 โฟลเดอร์ + 2 ลิงก์ (ถ้ามีค่า)
+    // ปุ่ม quick-action แบบ Flex — 4 โฟลเดอร์ + 2 ลิงก์ + แชร์ LINE + โทร (ถ้ามีค่า)
     let quickHtml = '';
     const folders = [
       ['📁 Main',    row.folder_id],
@@ -621,16 +691,44 @@ async function openEditModal(rowIndex) {
     if (row.post_link_2_platform && row.post_link_2_url) {
       quickHtml += `<a class="quick-link-btn" href="${row.post_link_2_url}" target="_blank">🔗 ${escapeHtml(row.post_link_2_platform)}</a>`;
     }
+    if (row.share_url) {
+      quickHtml += `<a class="quick-link-btn" href="${row.share_url}" target="_blank">📤 ลิงก์แชร์ (LINE)</a>`;
+    }
+    if (row.phone) {
+      const phoneStr = String(row.phone).trim();
+      if (/^[0-9+\-\s()]{6,}$/.test(phoneStr)) {
+        const tel = phoneStr.replace(/[\s()\-]/g,'');
+        quickHtml += `<a class="quick-link-btn" href="tel:${tel}">📞 โทร ${escapeHtml(phoneStr)}</a>`;
+      }
+    }
     el('pm-quick').innerHTML = quickHtml;
 
-    // ฟิลด์ทั่วไป — ข้ามคอลัมน์โฟลเดอร์ (แสดงผ่าน quick-button ด้านบนแล้ว)
+    // กรองฟิลด์ตาม mode — full=ครบทุกฟิลด์, finance=เฉพาะการเงิน, ranking=เฉพาะคะแนน
     const skipKeys = ['folder_id','folder_final_id','folder_footage_id','folder_stat_id'];
-    const visCols = EDIT_COLS.filter(c => !skipKeys.includes(c.key));
-    const editableFirst = [...visCols].sort((a,b) => (b.editable - a.editable));
+    let visCols = EDIT_COLS.filter(c => !skipKeys.includes(c.key));
+
+    if (mode === 'finance') {
+      const financeOrder = ['doc_urls','bank_name','bank_account','account_name','amount','status','slip_url','finance_note','stat_urls','gen_code'];
+      visCols = financeOrder.map(k => visCols.find(c => c.key === k)).filter(Boolean);
+    } else if (mode === 'ranking') {
+      visCols = visCols.filter(c => c.key === 'rating');
+    } else {
+      visCols = [...visCols].sort((a,b) => (b.editable - a.editable));
+    }
 
     let html = '';
-    editableFirst.forEach(c => {
+    visCols.forEach(c => {
       const val = row[c.key] ?? '';
+
+      // gen_code ในโหมดการเงิน — ปุ่ม copy เท่านั้น ไม่โชว์ค่า
+      if (mode === 'finance' && c.key === 'gen_code') {
+        if (val) {
+          html += `<div class="pf-field"><label>${c.label}</label>
+            <button type="button" class="copy-only-btn" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)">📋 คัดลอกเจนโค้ด</button></div>`;
+        }
+        return;
+      }
+
       if (c.type === 'select') {
         let opts = `<option value="">-- เลือก --</option>`;
         c.options.forEach(o => { opts += `<option value="${o}" ${val===o?'selected':''}>${o}</option>`; });
@@ -645,13 +743,28 @@ async function openEditModal(rowIndex) {
             <input type="range" class="rating-slider" min="0" max="5" step="0.1" value="${n}"
               oninput="onRatingSlide(this, '${c.key}')" ${c.editable?'':'disabled'}/>
           </div></div>`;
+      } else if (c.type === 'images') {
+        // doc_urls / stat_urls — แกลเลอรี่หลายรูป (อ่านอย่างเดียว)
+        const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
+        if (urls.length) {
+          let imgs = urls.map(u => `<img src="${u}" onclick="openLightbox('${u}', event)"/>`).join('');
+          html += `<div class="pf-field"><label>${c.label}</label><div class="img-gallery">${imgs}</div></div>`;
+        } else {
+          html += `<div class="pf-field"><label>${c.label}</label><div class="img-gallery empty">ไม่มีรูป</div></div>`;
+        }
       } else if (c.type === 'image') {
-        const imgPreview = val ? `<img src="${val}"/>` : '';
-        html += `<div class="pf-field"><label>${c.label}</label>
-          <div class="slip-box" data-key="${c.key}" data-type="image" data-value="${val||''}">
-            ${imgPreview}
-            <label class="file-btn-sm">📎 อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
-          </div></div>`;
+        // slip_url (อัพโหลดได้) vs line_profile_drive_url (แสดงอย่างเดียว)
+        if (c.editable) {
+          const imgPreview = val ? `<img src="${val}" onclick="openLightbox('${val}', event)"/>` : '';
+          html += `<div class="pf-field"><label>${c.label}</label>
+            <div class="slip-box" data-key="${c.key}" data-type="image" data-value="${val||''}">
+              ${imgPreview}
+              <label class="file-btn-sm">📎 อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
+            </div></div>`;
+        } else if (val) {
+          html += `<div class="pf-field"><label>${c.label}</label>
+            <div class="img-gallery"><img src="${val}" onclick="openLightbox('${val}', event)"/></div></div>`;
+        }
       } else {
         html += `<div class="pf-field"><label>${c.label}${c.editable?'':' 🔒'}</label>
           <input type="text" data-key="${c.key}" data-type="text" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable?'':'disabled'}/></div>`;
@@ -801,6 +914,8 @@ async function sendLineMessage() {
 // ══════════════════════ VIEW SWITCH + RANKING + FINANCE ══════════════════════
 let RANK_LOADED = false;
 let FIN_LOADED = false;
+let DIR_LOADED = false;
+let DIR_LIST = [];
 let FIN_ROWS = [];
 let FIN_COUNTS = {};
 let FIN_STATUS_FILTER = '';
@@ -809,11 +924,14 @@ function switchView(view) {
   el('tab-table').classList.toggle('active', view === 'table');
   el('tab-rank').classList.toggle('active', view === 'rank');
   el('tab-finance').classList.toggle('active', view === 'finance');
+  el('tab-directory').classList.toggle('active', view === 'directory');
   el('view-table').style.display = view === 'table' ? 'block' : 'none';
   el('view-rank').style.display  = view === 'rank'  ? 'block' : 'none';
   el('view-finance').style.display = view === 'finance' ? 'block' : 'none';
+  el('view-directory').style.display = view === 'directory' ? 'block' : 'none';
   if (view === 'rank' && !RANK_LOADED) loadRanking();
   if (view === 'finance' && !FIN_LOADED) loadFinance();
+  if (view === 'directory' && !DIR_LOADED) loadDirectory();
 }
 
 async function loadRanking() {
@@ -836,7 +954,7 @@ function renderRanking(list) {
   let html = '';
   list.forEach((r, i) => {
     const stars = r.rating > 0 ? `⭐ ${Number(r.rating).toFixed(1)}` : '<span style="color:#d1d5db">ยังไม่ให้คะแนน</span>';
-    html += `<div class="rank-card" onclick="openEditModal(${r.rowIndex})" style="cursor:pointer">
+    html += `<div class="rank-card" onclick="openEditModal(${r.rowIndex}, 'ranking')" style="cursor:pointer">
       ${i < 3 ? `<span class="medal">${medals[i]}</span>` : ''}
       <img src="${r.photo || ''}" alt=""/>
       <div class="rname">${escapeHtml(r.nickname || '—')}</div>
@@ -893,26 +1011,67 @@ function renderFinance() {
   el('finance-count').textContent = filtered.length + ' / ' + FIN_ROWS.length + ' รายการ';
 
   if (!filtered.length) {
-    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="10">ไม่พบข้อมูล</td></tr>`;
+    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="11">ไม่พบข้อมูล</td></tr>`;
     return;
   }
 
   let html = '';
   filtered.forEach(r => {
+    const tiktokLink = r.tiktok
+      ? `<a class="name-link" href="https://www.tiktok.com/@${String(r.tiktok).replace(/^@/,'')}" target="_blank">${escapeHtml(r.nickname||'—')}</a>`
+      : escapeHtml(r.nickname||'—');
     html += `<tr>
-      <td>${escapeHtml(r.nickname||'—')}</td>
+      <td><button class="gear-btn" onclick="openEditModal(${r.rowIndex}, 'finance')" title="จัดการ">⚙️</button></td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="thumb-cell">${r.profilePhoto ? `<img class="row-thumb" src="${r.profilePhoto}" onclick="openLightbox('${r.profilePhoto}', event)"/>` : ''}</td>
+      <td>${tiktokLink}</td>
       <td>${escapeHtml(r.bankName||'—')}</td>
       <td>${escapeHtml(String(r.bankAccount||'—'))}</td>
       <td>${escapeHtml(r.accountName||'—')}</td>
       <td>${escapeHtml(String(r.amount||'—'))}</td>
-      <td>${statusBadge(r.status)}</td>
-      <td>${r.slipUrl ? `<a href="${r.slipUrl}" target="_blank">📎 ดู</a>` : '—'}</td>
+      <td>${r.slipUrl ? `<img class="row-thumb" src="${r.slipUrl}" onclick="openLightbox('${r.slipUrl}', event)"/>` : '—'}</td>
       <td>${r.paidDate ? formatTsCompact(r.paidDate) : '—'}</td>
       <td>${escapeHtml(r.financeNote||'—')}</td>
-      <td><button class="icon-btn" onclick="openEditModal(${r.rowIndex})" title="แก้ไข">✏️</button></td>
     </tr>`;
   });
   el('finance-rows').innerHTML = html;
+}
+
+// ══════════════════════ DIRECTORY — ฐานข้อมูล influencer ══════════════════════
+async function loadDirectory() {
+  try {
+    const res = await gasPost({ action:'bk_directory', lineId: me.lineId });
+    if (!res.success) throw new Error(res.error || 'โหลดฐานข้อมูลไม่สำเร็จ');
+    DIR_LOADED = true;
+    DIR_LIST = res.list;
+    renderDirectory();
+  } catch (err) {
+    el('directory-grid').innerHTML = `<div class="placeholder">⚠️ ${err.message}</div>`;
+  }
+}
+
+function renderDirectory() {
+  const q = el('directory-search').value.trim().toLowerCase();
+  const filtered = !q ? DIR_LIST : DIR_LIST.filter(d =>
+    String(d.nickname||'').toLowerCase().includes(q) || String(d.tiktok||'').toLowerCase().includes(q)
+  );
+  el('directory-count').textContent = filtered.length + ' / ' + DIR_LIST.length + ' คน';
+
+  if (!filtered.length) {
+    el('directory-grid').innerHTML = `<div class="placeholder">ไม่พบข้อมูล</div>`;
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(d => {
+    html += `<div class="directory-card" onclick="openEditModal(${d.rowIndex}, 'full')">
+      <img src="${d.photo || ''}" alt=""/>
+      <div class="dname">${escapeHtml(d.nickname || '—')}</div>
+      <div class="dtiktok">@${escapeHtml(d.tiktok || '')}</div>
+      ${d.status ? statusBadge(d.status) : ''}
+    </div>`;
+  });
+  el('directory-grid').innerHTML = html;
 }
 </script>
 </body>
