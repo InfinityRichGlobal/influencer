@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:100vh;-webkit-font-smoothing:antialiased}
+body{font-family:'Sarabun',sans-serif;background:#f7f8fa;min-height:100vh;-webkit-font-smoothing:antialiased}
 
 /* ── หน้า center (loading / login / denied) ── */
 .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -114,6 +114,47 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 .push-box textarea:focus{border-color:#16a34a}
 .btn-push{margin-top:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:none;border-radius:5px;cursor:pointer;background:#16a34a;color:#fff}
 .btn-push:disabled{background:#86efac;cursor:not-allowed}
+
+/* ── inline icon links in table cells ── */
+.cell-icon{margin-left:6px;text-decoration:none;cursor:pointer;opacity:.75;font-size:13px}
+.cell-icon:hover{opacity:1}
+.line-link{color:#16a34a;font-weight:600;cursor:pointer;white-space:nowrap}
+.line-link:hover{text-decoration:underline}
+
+/* ── rating slider ── */
+.rating-slider-wrap{text-align:center}
+.rating-value{font-size:28px;font-weight:700;color:#fbbf24;margin-bottom:6px}
+.rating-value .star{font-size:20px}
+input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
+
+/* ── quick action buttons (โฟลเดอร์ + ลิงก์) แบบ Flex ── */
+.quick-actions{padding:0 20px 14px}
+.quick-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.quick-btn{display:block;text-align:center;background:#f5f5f5;color:#444;border-radius:6px;padding:9px 6px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #e5e7eb}
+.quick-btn:hover{background:#eee}
+.quick-link-btn{display:block;text-align:center;background:#f0fdf4;color:#15803d;border-radius:6px;padding:9px 6px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #bbf7d0;margin-bottom:8px}
+.quick-link-btn:hover{background:#dcfce7}
+
+/* ── days-since badge ── */
+.days-badge{display:inline-block;margin-top:6px;font-size:11px;font-weight:600;color:#6b7280;background:#f3f4f6;border-radius:99px;padding:3px 10px}
+
+/* ── finance tab ── */
+.status-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px}
+.status-card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:14px;text-align:center;cursor:pointer;border:2px solid transparent}
+.status-card.active{border-color:#16a34a}
+.status-card .num{font-size:24px;font-weight:700}
+.status-card .lbl{font-size:11px;color:#888;margin-top:2px}
+
+/* ── compact ranking grid ── */
+.rank-grid.compact{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.rank-grid.compact .rank-card{padding:12px 8px}
+.rank-grid.compact .rank-card img{width:52px;height:52px;margin-bottom:6px}
+.rank-grid.compact .rname{font-size:13px}
+.rank-grid.compact .rtiktok{font-size:10px;margin-bottom:4px}
+.rank-grid.compact .rstars{font-size:12px}
+
+/* ── LINE modal ── */
+.line-modal{background:#fff;border-radius:14px;max-width:340px;width:100%;margin-top:60px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2)}
 </style>
 </head>
 <body>
@@ -144,6 +185,7 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
   <div class="view-tabs">
     <button class="view-tab active" id="tab-table" onclick="switchView('table')">📋 ตารางงาน</button>
     <button class="view-tab" id="tab-rank" onclick="switchView('rank')">🏆 Ranking</button>
+    <button class="view-tab" id="tab-finance" onclick="switchView('finance')">💰 การเงิน</button>
   </div>
 
   <div id="view-table">
@@ -165,8 +207,27 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
   </div>
 
   <div id="view-rank" style="display:none">
-    <div class="rank-grid" id="rank-grid">
+    <div class="rank-grid compact" id="rank-grid">
       <div class="placeholder">กำลังโหลด...</div>
+    </div>
+  </div>
+
+  <div id="view-finance" style="display:none">
+    <div class="status-overview" id="status-overview"></div>
+    <div class="toolbar">
+      <input id="finance-search" type="text" placeholder="🔍 ค้นหาชื่อ..." oninput="renderFinance()"/>
+      <span class="count" id="finance-count"></span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>ชื่อเล่น</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>ชื่อบัญชี</th>
+            <th>จำนวนเงิน</th><th>สถานะ</th><th>สลิป</th><th>วันที่จ่าย</th><th>โน้ต</th><th>จัดการ</th>
+          </tr></thead>
+          <tbody id="finance-rows"><tr class="loading-row"><td colspan="10">กำลังโหลดข้อมูล…</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -179,16 +240,32 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
       <button class="modal-close" onclick="closeEditModal()">✕</button>
       <img class="avatar" id="pm-avatar" src="" alt=""/>
       <div class="pname" id="pm-name"></div>
+      <div class="days-badge" id="pm-days" style="display:none"></div>
     </div>
+    <div class="quick-actions" id="pm-quick"></div>
     <div class="profile-modal-body" id="pm-fields"></div>
-    <div class="push-box" style="margin:0 20px 16px">
-      <label style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px;display:block">💬 ส่งข้อความถึง influencer</label>
-      <textarea id="push-text" placeholder="พิมพ์ข้อความ..."></textarea>
-      <button class="btn-push" id="push-btn" onclick="sendPushMessage()">📤 ส่งข้อความ</button>
-    </div>
     <div class="profile-modal-foot">
       <button class="btn-modal cancel" onclick="closeEditModal()">ยกเลิก</button>
       <button class="btn-modal save" id="pm-save-btn" onclick="saveEditModal()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- LINE MODAL — แชร์ + ส่งข้อความ (แยกจาก edit modal) -->
+<div class="modal-overlay" id="line-modal">
+  <div class="line-modal">
+    <div class="profile-modal-head" style="padding:16px">
+      <button class="modal-close" onclick="closeLineModal()">✕</button>
+      <img class="avatar" id="lm-avatar" src="" style="width:60px;height:60px"/>
+      <div class="pname" id="lm-name" style="font-size:15px"></div>
+    </div>
+    <div style="padding:16px">
+      <a id="lm-share-btn" class="quick-link-btn" href="#" target="_blank">🔗 เปิดลิงก์แชร์</a>
+      <div class="push-box" style="margin-top:4px">
+        <label style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px;display:block">💬 ส่งข้อความถึง influencer</label>
+        <textarea id="lm-push-text" placeholder="พิมพ์ข้อความ..."></textarea>
+        <button class="btn-push" id="lm-push-btn" onclick="sendLineMessage()" style="width:100%">📤 ส่งข้อความ</button>
+      </div>
     </div>
   </div>
 </div>
@@ -324,17 +401,70 @@ function buildHeader() {
 }
 
 // แสดงค่าตาม type ของคอลัมน์ (status=badge, stars=ดาว, image=ลิงก์, text=ปกติ)
-function renderCellValue(c, val) {
+// แปลง "2026-06-20 00:55:38" → "20/6/26 00.55" (กระชับ ไม่มีเลขนำ 0 ที่วัน/เดือน)
+function formatTsCompact(val) {
+  const s = String(val || '');
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  if (!m) return s;
+  const d = parseInt(m[3],10), mo = parseInt(m[2],10), yy = m[1].slice(2);
+  return `${d}/${mo}/${yy} ${m[4]}.${m[5]}`;
+}
+
+function copyToClipboard(text, ev) {
+  ev.stopPropagation();
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = ev.target;
+    const old = btn.textContent;
+    btn.textContent = '✅';
+    setTimeout(() => { btn.textContent = old; }, 1000);
+  }).catch(() => alert('คัดลอกไม่สำเร็จ'));
+}
+
+function renderCellValue(c, val, row) {
+  // เวลา — format กระชับ
+  if (c.key === 'timestamp' || c.key === 'paid_date') {
+    return val ? escapeHtml(formatTsCompact(val)) : '—';
+  }
+  // คะแนน — ทศนิยม 1 ตำแหน่ง
   if (c.type === 'stars') {
     const n = Number(val) || 0;
-    return n > 0 ? '⭐'.repeat(n) : '—';
+    return n > 0 ? `⭐ ${n.toFixed(1)}` : '—';
   }
+  // สถานะ — badge สี
   if (c.type === 'select' && val) {
     if (c.key === 'status') return statusBadge(String(val));
     return `<span class="rstatus" style="display:inline-block">${escapeHtml(String(val))}</span>`;
   }
+  // สลิป
   if (c.type === 'image') {
     return val ? `<a href="${val}" target="_blank" onclick="event.stopPropagation()">📎 ดูสลิป</a>` : '—';
+  }
+  // ชื่อ LINE — แทรกปุ่ม 💬 เปิด LINE modal
+  if (c.key === 'line_name' && row) {
+    const safe = escapeHtml(String(val || '—'));
+    return `${safe} <span class="line-link" onclick="event.stopPropagation(); openLineModal(${row._rowIndex})">💬</span>`;
+  }
+  // เบอร์โทร — ไอคอนโทร (เฉพาะถ้าเป็นเบอร์จริง)
+  if (c.key === 'phone' && val) {
+    const phoneStr = String(val).trim();
+    const isPhone = /^[0-9+\-\s()]{6,}$/.test(phoneStr);
+    const safe = escapeHtml(phoneStr);
+    if (isPhone) {
+      const tel = phoneStr.replace(/[\s()\-]/g,'');
+      return `${safe} <a class="cell-icon" href="tel:${tel}" onclick="event.stopPropagation()">📞</a>`;
+    }
+    return safe;
+  }
+  // TikTok — ไอคอนเปิดโปรไฟล์
+  if (c.key === 'tiktok' && val) {
+    const uname = String(val).replace(/^@/,'');
+    const safe = escapeHtml(String(val));
+    return `${safe} <a class="cell-icon" href="https://www.tiktok.com/@${uname}" target="_blank" onclick="event.stopPropagation()">🎵</a>`;
+  }
+  // เจนโค้ด / เลขบัญชี — ไอคอน copy
+  if ((c.key === 'gen_code' || c.key === 'bank_account') && val) {
+    const safe = escapeHtml(String(val));
+    return `${safe} <span class="cell-icon" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" style="cursor:pointer">📋</span>`;
   }
   return escapeHtml(String(val ?? '') || '—');
 }
@@ -364,7 +494,8 @@ function renderTable() {
       const val = row[c.key] ?? '';
       // inline-edit เฉพาะ type text (select/stars/image แก้ผ่าน modal เท่านั้น — ใช้งานง่ายกว่า)
       const canInlineEdit = (me.role === 'admin' && c.editable && c.type === 'text');
-      html += `<td class="${canInlineEdit ? 'editable' : ''}" data-key="${c.key}" onclick="${canInlineEdit ? `startEdit(this, ${row._rowIndex})` : ''}">${renderCellValue(c, val)}</td>`;
+      const rawAttr = String(val).replace(/"/g,'&quot;');
+      html += `<td class="${canInlineEdit ? 'editable' : ''}" data-key="${c.key}" data-value="${rawAttr}" onclick="${canInlineEdit ? `startEdit(this, ${row._rowIndex})` : ''}">${renderCellValue(c, val, row)}</td>`;
     });
     if (me.role === 'admin') {
       html += `<td><div class="row-actions">
@@ -385,15 +516,22 @@ function escapeHtml(s) {
 function startEdit(td, rowIndex) {
   if (td.querySelector('input')) return;
   const key = td.dataset.key;
-  const oldVal = td.textContent === '—' ? '' : td.textContent;
+  const col = TABLE_COLS.find(c => c.key === key);
+  const oldVal = td.dataset.value || '';
   td.innerHTML = `<input type="text" value="${oldVal.replace(/"/g,'&quot;')}"/>`;
   const input = td.querySelector('input');
   input.focus();
   input.select();
 
+  const restore = (v) => {
+    const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex);
+    td.dataset.value = v;
+    td.innerHTML = renderCellValue(col, v, row);
+  };
+
   const save = async () => {
     const newVal = input.value;
-    if (newVal === oldVal) { td.textContent = oldVal || '—'; return; }
+    if (newVal === oldVal) { restore(oldVal); return; }
     td.textContent = '...';
     try {
       const res = await gasPost({
@@ -401,19 +539,19 @@ function startEdit(td, rowIndex) {
         rowIndex, updates: JSON.stringify({ [key]: newVal })
       });
       if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
-      td.textContent = newVal || '—';
       const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex);
       if (row) row[key] = newVal;
+      restore(newVal);
     } catch (err) {
       alert('แก้ไขไม่สำเร็จ: ' + err.message);
-      td.textContent = oldVal || '—';
+      restore(oldVal);
     }
   };
 
   input.addEventListener('blur', save);
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') input.blur();
-    if (e.key === 'Escape') { td.textContent = oldVal || '—'; }
+    if (e.key === 'Escape') { restore(oldVal); }
   });
 }
 
@@ -438,7 +576,8 @@ let EDIT_COLS = [];
 async function openEditModal(rowIndex) {
   EDIT_ROW_INDEX = rowIndex;
   el('pm-fields').innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">กำลังโหลด...</p>';
-  el('push-text').value = '';
+  el('pm-quick').innerHTML = '';
+  el('pm-days').style.display = 'none';
   el('edit-modal').classList.add('active');
 
   try {
@@ -452,7 +591,43 @@ async function openEditModal(rowIndex) {
     el('pm-avatar').src = row._photo || '';
     el('pm-name').textContent = row.nickname || row.line_name || '—';
 
-    const editableFirst = [...EDIT_COLS].sort((a,b) => (b.editable - a.editable));
+    // วันที่ร่วมงานมาแล้วกี่วัน (จาก timestamp ถึงวันนี้)
+    if (row.timestamp) {
+      const days = daysSince(row.timestamp);
+      if (days !== null) {
+        el('pm-days').textContent = `📅 ร่วมงานมาแล้ว ${days} วัน`;
+        el('pm-days').style.display = 'inline-block';
+      }
+    }
+
+    // ปุ่ม quick-action แบบ Flex — 4 โฟลเดอร์ + 2 ลิงก์ (ถ้ามีค่า)
+    let quickHtml = '';
+    const folders = [
+      ['📁 Main',    row.folder_id],
+      ['🎬 Master',  row.folder_final_id],
+      ['🎥 Footage', row.folder_footage_id],
+      ['📊 Stat',    row.folder_stat_id]
+    ].filter(f => f[1]);
+    if (folders.length) {
+      quickHtml += '<div class="quick-row">';
+      folders.forEach(f => {
+        quickHtml += `<a class="quick-btn" href="https://drive.google.com/drive/folders/${f[1]}" target="_blank">${f[0]}</a>`;
+      });
+      quickHtml += '</div>';
+    }
+    if (row.post_link_1_platform && row.post_link_1_url) {
+      quickHtml += `<a class="quick-link-btn" href="${row.post_link_1_url}" target="_blank">🔗 ${escapeHtml(row.post_link_1_platform)}</a>`;
+    }
+    if (row.post_link_2_platform && row.post_link_2_url) {
+      quickHtml += `<a class="quick-link-btn" href="${row.post_link_2_url}" target="_blank">🔗 ${escapeHtml(row.post_link_2_platform)}</a>`;
+    }
+    el('pm-quick').innerHTML = quickHtml;
+
+    // ฟิลด์ทั่วไป — ข้ามคอลัมน์โฟลเดอร์ (แสดงผ่าน quick-button ด้านบนแล้ว)
+    const skipKeys = ['folder_id','folder_final_id','folder_footage_id','folder_stat_id'];
+    const visCols = EDIT_COLS.filter(c => !skipKeys.includes(c.key));
+    const editableFirst = [...visCols].sort((a,b) => (b.editable - a.editable));
+
     let html = '';
     editableFirst.forEach(c => {
       const val = row[c.key] ?? '';
@@ -462,11 +637,14 @@ async function openEditModal(rowIndex) {
         html += `<div class="pf-field"><label>${c.label}</label>
           <select data-key="${c.key}" data-type="select" ${c.editable?'':'disabled'}>${opts}</select></div>`;
       } else if (c.type === 'stars') {
+        // คะแนนทศนิยม — สไลเดอร์ 0.0-5.0 step 0.1
         const n = Number(val) || 0;
-        let stars = '';
-        for (let s=1; s<=5; s++) stars += `<span data-val="${s}" class="${s<=n?'filled':''}" onclick="pickStar(this,${s})">★</span>`;
         html += `<div class="pf-field"><label>${c.label}</label>
-          <div class="star-picker" data-key="${c.key}" data-type="stars" data-value="${n}">${stars}</div></div>`;
+          <div class="rating-slider-wrap" data-key="${c.key}" data-type="stars" data-value="${n}">
+            <div class="rating-value" id="rv-${c.key}"><span class="star">⭐</span> ${n.toFixed(1)}</div>
+            <input type="range" class="rating-slider" min="0" max="5" step="0.1" value="${n}"
+              oninput="onRatingSlide(this, '${c.key}')" ${c.editable?'':'disabled'}/>
+          </div></div>`;
       } else if (c.type === 'image') {
         const imgPreview = val ? `<img src="${val}"/>` : '';
         html += `<div class="pf-field"><label>${c.label}</label>
@@ -485,10 +663,21 @@ async function openEditModal(rowIndex) {
   }
 }
 
-function pickStar(span, val) {
-  const picker = span.parentElement;
-  picker.dataset.value = val;
-  [...picker.children].forEach(s => s.classList.toggle('filled', Number(s.dataset.val) <= val));
+// คำนวณจำนวนวันจาก timestamp ("YYYY-MM-DD HH:MM:SS") ถึงวันนี้
+function daysSince(tsStr) {
+  const m = String(tsStr).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const past = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  past.setHours(0,0,0,0);
+  return Math.max(0, Math.round((today - past) / 86400000));
+}
+
+function onRatingSlide(slider, key) {
+  const val = parseFloat(slider.value);
+  slider.parentElement.dataset.value = val;
+  el('rv-' + key).innerHTML = `<span class="star">⭐</span> ${val.toFixed(1)}`;
 }
 
 async function uploadSlipFile(input) {
@@ -546,6 +735,9 @@ async function saveEditModal() {
     const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
     if (row) Object.assign(row, updates);
     renderTable();
+    // ข้อมูลอาจเปลี่ยน (สถานะ/คะแนน) → บังคับโหลดใหม่ครั้งถัดไปที่เปิดแท็บ
+    FIN_LOADED = false;
+    RANK_LOADED = false;
     closeEditModal();
   } catch (err) {
     alert('บันทึกไม่สำเร็จ: ' + err.message);
@@ -554,21 +746,47 @@ async function saveEditModal() {
   }
 }
 
-// ── ส่งข้อความถึง influencer (เฟส 5) ──
-async function sendPushMessage() {
-  const msg = el('push-text').value.trim();
-  if (!msg) { alert('กรุณากรอกข้อความ'); return; }
-  if (!EDIT_TARGET_LINEID) { alert('ไม่พบ LINE ID ปลายทาง'); return; }
+// ══════════════════════ LINE MODAL — แชร์ + ส่งข้อความ (แยกจาก edit modal) ══════════════════════
+let LINE_TARGET_LINEID = null;
 
-  const btn = el('push-btn');
+function openLineModal(rowIndex) {
+  const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex) || FIN_ROWS.find(r => r.rowIndex === rowIndex);
+  if (!row) return;
+  LINE_TARGET_LINEID = row._lineId || row.lineId;
+
+  el('lm-avatar').src = row._photo || row.photo || '';
+  el('lm-name').textContent = row.nickname || row.line_name || row.lineName || '—';
+  const shareBtn = el('lm-share-btn');
+  const shareUrl = row._shareUrl || row.shareUrl;
+  if (shareUrl) {
+    shareBtn.href = shareUrl;
+    shareBtn.style.display = '';
+  } else {
+    shareBtn.style.display = 'none';
+  }
+  el('lm-push-text').value = '';
+  el('line-modal').classList.add('active');
+}
+
+function closeLineModal() {
+  el('line-modal').classList.remove('active');
+  LINE_TARGET_LINEID = null;
+}
+
+async function sendLineMessage() {
+  const msg = el('lm-push-text').value.trim();
+  if (!msg) { alert('กรุณากรอกข้อความ'); return; }
+  if (!LINE_TARGET_LINEID) { alert('ไม่พบ LINE ID ปลายทาง'); return; }
+
+  const btn = el('lm-push-btn');
   btn.disabled = true; btn.textContent = 'กำลังส่ง...';
   try {
     const res = await gasPost({
       action:'bk_push', lineId: me.lineId,
-      targetLineId: EDIT_TARGET_LINEID, message: msg
+      targetLineId: LINE_TARGET_LINEID, message: msg
     });
     if (!res.success) throw new Error(res.error || 'ส่งไม่สำเร็จ');
-    el('push-text').value = '';
+    el('lm-push-text').value = '';
     btn.textContent = '✅ ส่งแล้ว';
     setTimeout(() => { btn.textContent = '📤 ส่งข้อความ'; }, 1500);
   } catch (err) {
@@ -579,15 +797,23 @@ async function sendPushMessage() {
   }
 }
 
-// ══════════════════════ VIEW SWITCH + RANKING (เฟส 6) ══════════════════════
+
+// ══════════════════════ VIEW SWITCH + RANKING + FINANCE ══════════════════════
 let RANK_LOADED = false;
+let FIN_LOADED = false;
+let FIN_ROWS = [];
+let FIN_COUNTS = {};
+let FIN_STATUS_FILTER = '';
 
 function switchView(view) {
   el('tab-table').classList.toggle('active', view === 'table');
   el('tab-rank').classList.toggle('active', view === 'rank');
+  el('tab-finance').classList.toggle('active', view === 'finance');
   el('view-table').style.display = view === 'table' ? 'block' : 'none';
   el('view-rank').style.display  = view === 'rank'  ? 'block' : 'none';
+  el('view-finance').style.display = view === 'finance' ? 'block' : 'none';
   if (view === 'rank' && !RANK_LOADED) loadRanking();
+  if (view === 'finance' && !FIN_LOADED) loadFinance();
 }
 
 async function loadRanking() {
@@ -609,17 +835,84 @@ function renderRanking(list) {
   const medals = ['🥇','🥈','🥉'];
   let html = '';
   list.forEach((r, i) => {
-    const stars = r.rating > 0 ? '⭐'.repeat(r.rating) : '<span style="color:#d1d5db">ยังไม่ให้คะแนน</span>';
+    const stars = r.rating > 0 ? `⭐ ${Number(r.rating).toFixed(1)}` : '<span style="color:#d1d5db">ยังไม่ให้คะแนน</span>';
     html += `<div class="rank-card" onclick="openEditModal(${r.rowIndex})" style="cursor:pointer">
       ${i < 3 ? `<span class="medal">${medals[i]}</span>` : ''}
       <img src="${r.photo || ''}" alt=""/>
       <div class="rname">${escapeHtml(r.nickname || '—')}</div>
       <div class="rtiktok">@${escapeHtml(r.tiktok || '')}</div>
       <div class="rstars">${stars}</div>
-      ${r.status ? `<div class="rstatus">${escapeHtml(r.status)}</div>` : ''}
+      ${r.status ? statusBadge(r.status) : ''}
     </div>`;
   });
   el('rank-grid').innerHTML = html;
+}
+
+// ── การเงิน — สรุปสถานะ + ตารางโฟกัสการเงิน ──
+async function loadFinance() {
+  try {
+    const res = await gasPost({ action:'bk_finance', lineId: me.lineId });
+    if (!res.success) throw new Error(res.error || 'โหลดข้อมูลการเงินไม่สำเร็จ');
+    FIN_LOADED = true;
+    FIN_ROWS = res.rows;
+    FIN_COUNTS = res.counts;
+    renderStatusOverview(FIN_COUNTS);
+    renderFinance();
+  } catch (err) {
+    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="10">⚠️ ${err.message}</td></tr>`;
+  }
+}
+
+function renderStatusOverview(counts) {
+  const order = ['รอตรวจสอบ','อนุมัติแล้ว','เข้าคิวจ่าย','จ่ายเงินแล้ว','ตีกลับ'];
+  let html = '';
+  order.forEach(s => {
+    const n = counts[s] || 0;
+    const c = STATUS_COLORS[s] || { bg:'#f1f5f9', fg:'#475569' };
+    const active = FIN_STATUS_FILTER === s ? 'active' : '';
+    html += `<div class="status-card ${active}" style="background:${c.bg}" onclick="filterFinanceStatus('${s}')">
+      <div class="num" style="color:${c.fg}">${n}</div>
+      <div class="lbl" style="color:${c.fg}">${s}</div>
+    </div>`;
+  });
+  el('status-overview').innerHTML = html;
+}
+
+function filterFinanceStatus(status) {
+  FIN_STATUS_FILTER = (FIN_STATUS_FILTER === status) ? '' : status;
+  renderStatusOverview(FIN_COUNTS);
+  renderFinance();
+}
+
+function renderFinance() {
+  const q = el('finance-search').value.trim().toLowerCase();
+  let filtered = FIN_ROWS;
+  if (FIN_STATUS_FILTER) filtered = filtered.filter(r => r.status === FIN_STATUS_FILTER);
+  if (q) filtered = filtered.filter(r => String(r.nickname||'').toLowerCase().includes(q) || String(r.lineName||'').toLowerCase().includes(q));
+
+  el('finance-count').textContent = filtered.length + ' / ' + FIN_ROWS.length + ' รายการ';
+
+  if (!filtered.length) {
+    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="10">ไม่พบข้อมูล</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(r => {
+    html += `<tr>
+      <td>${escapeHtml(r.nickname||'—')}</td>
+      <td>${escapeHtml(r.bankName||'—')}</td>
+      <td>${escapeHtml(String(r.bankAccount||'—'))}</td>
+      <td>${escapeHtml(r.accountName||'—')}</td>
+      <td>${escapeHtml(String(r.amount||'—'))}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td>${r.slipUrl ? `<a href="${r.slipUrl}" target="_blank">📎 ดู</a>` : '—'}</td>
+      <td>${r.paidDate ? formatTsCompact(r.paidDate) : '—'}</td>
+      <td>${escapeHtml(r.financeNote||'—')}</td>
+      <td><button class="icon-btn" onclick="openEditModal(${r.rowIndex})" title="แก้ไข">✏️</button></td>
+    </tr>`;
+  });
+  el('finance-rows').innerHTML = html;
 }
 </script>
 </body>
