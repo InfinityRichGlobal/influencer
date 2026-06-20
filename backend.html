@@ -77,6 +77,42 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 .btn-modal.save:hover{background:#15803d}
 .btn-modal.save:disabled{background:#86efac;cursor:not-allowed}
 .btn-modal.cancel{background:#f4f4f5;color:#444}
+
+/* ── view tabs ── */
+.view-tabs{display:flex;gap:8px;margin-bottom:14px}
+.view-tab{font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;background:#fff;color:#666;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+.view-tab.active{background:#16a34a;color:#fff}
+
+/* ── ranking cards ── */
+.rank-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.rank-card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:18px;text-align:center;position:relative}
+.rank-card .medal{position:absolute;top:10px;left:12px;font-size:18px}
+.rank-card img{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#e5e7eb;margin-bottom:10px}
+.rank-card .rname{font-weight:700;font-size:15px;color:#1F1F1F}
+.rank-card .rtiktok{font-size:12px;color:#888;margin-bottom:8px}
+.rank-card .rstars{font-size:15px;color:#fbbf24;letter-spacing:1px}
+.rank-card .rstatus{margin-top:8px;display:inline-block;font-size:11px;font-weight:600;padding:2px 10px;border-radius:99px;background:#f0fdf4;color:#15803d}
+
+/* ── star picker (ใน modal) ── */
+.star-picker{display:flex;gap:4px;font-size:24px}
+.star-picker span{cursor:pointer;color:#e5e7eb}
+.star-picker span.filled{color:#fbbf24}
+
+/* ── select in modal ── */
+.pf-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:9px 11px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
+.pf-field select:focus{border-color:#16a34a;background:#fff}
+
+/* ── slip upload ── */
+.slip-box{display:flex;align-items:center;gap:10px}
+.slip-box img{width:60px;height:60px;border-radius:6px;object-fit:cover;border:1px solid #e5e7eb}
+.slip-box .file-btn-sm{font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px dashed #86efac;border-radius:5px;padding:7px 12px;color:#16a34a;cursor:pointer;background:transparent}
+
+/* ── push message section in modal ── */
+.push-box{background:#f0fdf4;border-radius:8px;padding:12px;margin-top:6px}
+.push-box textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:8px 10px;font-size:13px;font-family:'Sarabun',sans-serif;outline:none;resize:vertical;min-height:60px;background:#fff}
+.push-box textarea:focus{border-color:#16a34a}
+.btn-push{margin-top:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:none;border-radius:5px;cursor:pointer;background:#16a34a;color:#fff}
+.btn-push:disabled{background:#86efac;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -103,18 +139,33 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
       </div>
     </div>
   </div>
-  <div class="toolbar">
-    <input id="search-box" type="text" placeholder="🔍 ค้นหา ชื่อเล่น / TikTok / เบอร์..." oninput="renderTable()"/>
-    <span class="count" id="row-count"></span>
+
+  <div class="view-tabs">
+    <button class="view-tab active" id="tab-table" onclick="switchView('table')">📋 ตารางงาน</button>
+    <button class="view-tab" id="tab-rank" onclick="switchView('rank')">🏆 Ranking</button>
   </div>
-  <div class="table-wrap">
-    <div class="table-scroll">
-      <table>
-        <thead id="thead-row"><tr><th>กำลังโหลด...</th></tr></thead>
-        <tbody id="tbody-rows"><tr class="loading-row"><td>กำลังโหลดข้อมูล…</td></tr></tbody>
-      </table>
+
+  <div id="view-table">
+    <div class="toolbar">
+      <input id="search-box" type="text" placeholder="🔍 ค้นหา ชื่อเล่น / TikTok / เบอร์..." oninput="renderTable()"/>
+      <span class="count" id="row-count"></span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead id="thead-row"><tr><th>กำลังโหลด...</th></tr></thead>
+          <tbody id="tbody-rows"><tr class="loading-row"><td>กำลังโหลดข้อมูล…</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
+
+  <div id="view-rank" style="display:none">
+    <div class="rank-grid" id="rank-grid">
+      <div class="placeholder">กำลังโหลด...</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- EDIT MODAL — การ์ดโปรไฟล์แก้ไขรวด -->
@@ -126,6 +177,11 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
       <div class="pname" id="pm-name"></div>
     </div>
     <div class="profile-modal-body" id="pm-fields"></div>
+    <div class="push-box" style="margin:0 20px 16px">
+      <label style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px;display:block">💬 ส่งข้อความถึง influencer</label>
+      <textarea id="push-text" placeholder="พิมพ์ข้อความ..."></textarea>
+      <button class="btn-push" id="push-btn" onclick="sendPushMessage()">📤 ส่งข้อความ</button>
+    </div>
     <div class="profile-modal-foot">
       <button class="btn-modal cancel" onclick="closeEditModal()">ยกเลิก</button>
       <button class="btn-modal save" id="pm-save-btn" onclick="saveEditModal()">💾 บันทึก</button>
@@ -238,6 +294,21 @@ function buildHeader() {
   el('thead-row').innerHTML = html;
 }
 
+// แสดงค่าตาม type ของคอลัมน์ (status=badge, stars=ดาว, image=ลิงก์, text=ปกติ)
+function renderCellValue(c, val) {
+  if (c.type === 'stars') {
+    const n = Number(val) || 0;
+    return n > 0 ? '⭐'.repeat(n) : '—';
+  }
+  if (c.type === 'select' && val) {
+    return `<span class="rstatus" style="display:inline-block">${escapeHtml(String(val))}</span>`;
+  }
+  if (c.type === 'image') {
+    return val ? `<a href="${val}" target="_blank" onclick="event.stopPropagation()">📎 ดูสลิป</a>` : '—';
+  }
+  return escapeHtml(String(val ?? '') || '—');
+}
+
 function renderTable() {
   const q = el('search-box').value.trim().toLowerCase();
   const filtered = !q ? TABLE_ROWS : TABLE_ROWS.filter(row =>
@@ -256,8 +327,9 @@ function renderTable() {
     html += `<tr data-row="${row._rowIndex}">`;
     TABLE_COLS.forEach(c => {
       const val = row[c.key] ?? '';
-      const editableCls = (me.role === 'admin' && c.editable) ? 'editable' : '';
-      html += `<td class="${editableCls}" data-key="${c.key}" onclick="${editableCls ? `startEdit(this, ${row._rowIndex})` : ''}">${escapeHtml(String(val))}</td>`;
+      // inline-edit เฉพาะ type text (select/stars/image แก้ผ่าน modal เท่านั้น — ใช้งานง่ายกว่า)
+      const canInlineEdit = (me.role === 'admin' && c.editable && c.type === 'text');
+      html += `<td class="${canInlineEdit ? 'editable' : ''}" data-key="${c.key}" onclick="${canInlineEdit ? `startEdit(this, ${row._rowIndex})` : ''}">${renderCellValue(c, val)}</td>`;
     });
     if (me.role === 'admin') {
       html += `<td><div class="row-actions">
@@ -274,11 +346,11 @@ function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── inline edit: คลิกเซลล์ → กลายเป็น input ── 
+// ── inline edit: คลิกเซลล์ (เฉพาะ type=text) → กลายเป็น input ──
 function startEdit(td, rowIndex) {
-  if (td.querySelector('input')) return; // กำลังแก้อยู่แล้ว
+  if (td.querySelector('input')) return;
   const key = td.dataset.key;
-  const oldVal = td.textContent;
+  const oldVal = td.textContent === '—' ? '' : td.textContent;
   td.innerHTML = `<input type="text" value="${oldVal.replace(/"/g,'&quot;')}"/>`;
   const input = td.querySelector('input');
   input.focus();
@@ -286,7 +358,7 @@ function startEdit(td, rowIndex) {
 
   const save = async () => {
     const newVal = input.value;
-    if (newVal === oldVal) { td.textContent = oldVal; return; }
+    if (newVal === oldVal) { td.textContent = oldVal || '—'; return; }
     td.textContent = '...';
     try {
       const res = await gasPost({
@@ -294,20 +366,19 @@ function startEdit(td, rowIndex) {
         rowIndex, updates: JSON.stringify({ [key]: newVal })
       });
       if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
-      td.textContent = newVal;
-      // sync ค่าใน TABLE_ROWS เพื่อให้ search ใช้ค่าล่าสุด
+      td.textContent = newVal || '—';
       const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex);
       if (row) row[key] = newVal;
     } catch (err) {
       alert('แก้ไขไม่สำเร็จ: ' + err.message);
-      td.textContent = oldVal;
+      td.textContent = oldVal || '—';
     }
   };
 
   input.addEventListener('blur', save);
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') input.blur();
-    if (e.key === 'Escape') { td.textContent = oldVal; }
+    if (e.key === 'Escape') { td.textContent = oldVal || '—'; }
   });
 }
 
@@ -324,40 +395,109 @@ async function deleteRow(rowIndex) {
 }
 
 // ══════════════════════ EDIT MODAL — การ์ดโปรไฟล์แก้ไขรวด ══════════════════════
+// ดึงทุกฟิลด์ผ่าน bk_getRow (ไม่ใช่แค่คอลัมน์ที่โชว์ในตาราง)
 let EDIT_ROW_INDEX = null;
+let EDIT_TARGET_LINEID = null;
+let EDIT_COLS = [];
 
-function openEditModal(rowIndex) {
-  const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex);
-  if (!row) return;
+async function openEditModal(rowIndex) {
   EDIT_ROW_INDEX = rowIndex;
-
-  el('pm-avatar').src = row._photo || '';
-  el('pm-name').textContent = row.nickname || row.line_name || '—';
-
-  // เรียงฟิลด์ลงมา — editable ก่อน, ที่เหลือ (อ่านอย่างเดียว) ต่อท้าย
-  const editableFirst = [...TABLE_COLS].sort((a,b) => (b.editable - a.editable));
-  let html = '';
-  editableFirst.forEach(c => {
-    const val = row[c.key] ?? '';
-    html += `<div class="pf-field">
-      <label>${c.label}${c.editable ? '' : ' 🔒'}</label>
-      <input type="text" data-key="${c.key}" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable ? '' : 'disabled'}/>
-    </div>`;
-  });
-  el('pm-fields').innerHTML = html;
+  el('pm-fields').innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">กำลังโหลด...</p>';
+  el('push-text').value = '';
   el('edit-modal').classList.add('active');
+
+  try {
+    const res = await gasPost({ action:'bk_getRow', lineId: me.lineId, rowIndex });
+    if (!res.success) throw new Error(res.error || 'โหลดข้อมูลไม่สำเร็จ');
+
+    const row = res.row;
+    EDIT_COLS = res.columns;
+    EDIT_TARGET_LINEID = row._lineId;
+
+    el('pm-avatar').src = row._photo || '';
+    el('pm-name').textContent = row.nickname || row.line_name || '—';
+
+    const editableFirst = [...EDIT_COLS].sort((a,b) => (b.editable - a.editable));
+    let html = '';
+    editableFirst.forEach(c => {
+      const val = row[c.key] ?? '';
+      if (c.type === 'select') {
+        let opts = `<option value="">-- เลือก --</option>`;
+        c.options.forEach(o => { opts += `<option value="${o}" ${val===o?'selected':''}>${o}</option>`; });
+        html += `<div class="pf-field"><label>${c.label}</label>
+          <select data-key="${c.key}" data-type="select" ${c.editable?'':'disabled'}>${opts}</select></div>`;
+      } else if (c.type === 'stars') {
+        const n = Number(val) || 0;
+        let stars = '';
+        for (let s=1; s<=5; s++) stars += `<span data-val="${s}" class="${s<=n?'filled':''}" onclick="pickStar(this,${s})">★</span>`;
+        html += `<div class="pf-field"><label>${c.label}</label>
+          <div class="star-picker" data-key="${c.key}" data-type="stars" data-value="${n}">${stars}</div></div>`;
+      } else if (c.type === 'image') {
+        const imgPreview = val ? `<img src="${val}"/>` : '';
+        html += `<div class="pf-field"><label>${c.label}</label>
+          <div class="slip-box" data-key="${c.key}" data-type="image" data-value="${val||''}">
+            ${imgPreview}
+            <label class="file-btn-sm">📎 อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
+          </div></div>`;
+      } else {
+        html += `<div class="pf-field"><label>${c.label}${c.editable?'':' 🔒'}</label>
+          <input type="text" data-key="${c.key}" data-type="text" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable?'':'disabled'}/></div>`;
+      }
+    });
+    el('pm-fields').innerHTML = html;
+  } catch (err) {
+    el('pm-fields').innerHTML = `<p style="text-align:center;color:#dc2626;font-size:13px;padding:20px">⚠️ ${err.message}</p>`;
+  }
+}
+
+function pickStar(span, val) {
+  const picker = span.parentElement;
+  picker.dataset.value = val;
+  [...picker.children].forEach(s => s.classList.toggle('filled', Number(s.dataset.val) <= val));
+}
+
+async function uploadSlipFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const box = input.closest('.slip-box');
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    try {
+      const res = await gasPost({
+        action:'bk_uploadSlip', lineId: me.lineId, rowIndex: EDIT_ROW_INDEX,
+        base64Data: base64, fileName: file.name, mimeType: file.type
+      });
+      if (!res.success) throw new Error(res.error || 'อัพโหลดไม่สำเร็จ');
+      box.dataset.value = res.url;
+      let img = box.querySelector('img');
+      if (!img) { img = document.createElement('img'); box.insertBefore(img, box.firstChild); }
+      img.src = res.url;
+    } catch (err) {
+      alert('อัพโหลดสลิปไม่สำเร็จ: ' + err.message);
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 function closeEditModal() {
   el('edit-modal').classList.remove('active');
   EDIT_ROW_INDEX = null;
+  EDIT_TARGET_LINEID = null;
 }
 
 async function saveEditModal() {
   if (!EDIT_ROW_INDEX) return;
-  const inputs = el('pm-fields').querySelectorAll('input:not(:disabled)');
   const updates = {};
-  inputs.forEach(inp => { updates[inp.dataset.key] = inp.value; });
+
+  el('pm-fields').querySelectorAll('[data-key]').forEach(node => {
+    const key = node.dataset.key;
+    const type = node.dataset.type;
+    if (type === 'select') { if (!node.disabled) updates[key] = node.value; }
+    else if (type === 'stars') { updates[key] = node.dataset.value || '0'; }
+    else if (type === 'image') { updates[key] = node.dataset.value || ''; }
+    else { if (!node.disabled) updates[key] = node.value; }
+  });
 
   const btn = el('pm-save-btn');
   btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
@@ -368,7 +508,6 @@ async function saveEditModal() {
     });
     if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
 
-    // sync ค่าใน TABLE_ROWS + re-render ตาราง
     const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
     if (row) Object.assign(row, updates);
     renderTable();
@@ -378,6 +517,74 @@ async function saveEditModal() {
   } finally {
     btn.disabled = false; btn.textContent = '💾 บันทึก';
   }
+}
+
+// ── ส่งข้อความถึง influencer (เฟส 5) ──
+async function sendPushMessage() {
+  const msg = el('push-text').value.trim();
+  if (!msg) { alert('กรุณากรอกข้อความ'); return; }
+  if (!EDIT_TARGET_LINEID) { alert('ไม่พบ LINE ID ปลายทาง'); return; }
+
+  const btn = el('push-btn');
+  btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+  try {
+    const res = await gasPost({
+      action:'bk_push', lineId: me.lineId,
+      targetLineId: EDIT_TARGET_LINEID, message: msg
+    });
+    if (!res.success) throw new Error(res.error || 'ส่งไม่สำเร็จ');
+    el('push-text').value = '';
+    btn.textContent = '✅ ส่งแล้ว';
+    setTimeout(() => { btn.textContent = '📤 ส่งข้อความ'; }, 1500);
+  } catch (err) {
+    alert('ส่งข้อความไม่สำเร็จ: ' + err.message);
+    btn.textContent = '📤 ส่งข้อความ';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ══════════════════════ VIEW SWITCH + RANKING (เฟส 6) ══════════════════════
+let RANK_LOADED = false;
+
+function switchView(view) {
+  el('tab-table').classList.toggle('active', view === 'table');
+  el('tab-rank').classList.toggle('active', view === 'rank');
+  el('view-table').style.display = view === 'table' ? 'block' : 'none';
+  el('view-rank').style.display  = view === 'rank'  ? 'block' : 'none';
+  if (view === 'rank' && !RANK_LOADED) loadRanking();
+}
+
+async function loadRanking() {
+  try {
+    const res = await gasPost({ action:'bk_ranking', lineId: me.lineId });
+    if (!res.success) throw new Error(res.error || 'โหลด ranking ไม่สำเร็จ');
+    RANK_LOADED = true;
+    renderRanking(res.list);
+  } catch (err) {
+    el('rank-grid').innerHTML = `<div class="placeholder">⚠️ ${err.message}</div>`;
+  }
+}
+
+function renderRanking(list) {
+  if (!list.length) {
+    el('rank-grid').innerHTML = `<div class="placeholder">ยังไม่มีข้อมูล</div>`;
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  let html = '';
+  list.forEach((r, i) => {
+    const stars = r.rating > 0 ? '⭐'.repeat(r.rating) : '<span style="color:#d1d5db">ยังไม่ให้คะแนน</span>';
+    html += `<div class="rank-card" onclick="openEditModal(${r.rowIndex})" style="cursor:pointer">
+      ${i < 3 ? `<span class="medal">${medals[i]}</span>` : ''}
+      <img src="${r.photo || ''}" alt=""/>
+      <div class="rname">${escapeHtml(r.nickname || '—')}</div>
+      <div class="rtiktok">@${escapeHtml(r.tiktok || '')}</div>
+      <div class="rstars">${stars}</div>
+      ${r.status ? `<div class="rstatus">${escapeHtml(r.status)}</div>` : ''}
+    </div>`;
+  });
+  el('rank-grid').innerHTML = html;
 }
 </script>
 </body>
