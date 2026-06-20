@@ -19,22 +19,10 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 .fa-pen:before {color: #f0b826;}
 element.style {padding: 0PX 10PX;border-radius: 5PX;}
 .fa-cog:before, .fa-gear:before {COLOR: #9ca3af;}
-.fa-chain:before, .fa-link:before {COLOR: #fbbf24;}
-
-  .fa-comment-dots:before, .fa-commenting:before {
-    content: "\f4ad";
-    COLOR: #1aaf58;
-}
-
-  .fa-share-alt:before, .fa-share-nodes:before {
-    content: "\f1e0";
-    COLOR: #1aaf58;
-}
-
-  .fa-phone:before {
-    content: "\f095";
-    color: #ed4b4b;
-}
+.fa-chain:before, .fa-link:before {COLOR: #2154d2;}
+.fa-comment-dots:before, .fa-commenting:before {COLOR: #1aaf58;}
+.fa-share-alt:before, .fa-share-nodes:before {COLOR: #1aaf58;}
+.fa-clapperboard:before,.fa-folder-blank:before, .fa-folder:before,.fa-video-camera:before, .fa-video:before,.fa-chart-column:before,.fa-phone:before {color: #a2a2a2;}
 
   
   
@@ -175,16 +163,16 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 .line-link:hover{text-decoration:underline}
 
 /* ── quick actions — ไอคอนวงกลมแบบแอป (โมเดิร์น) ── */
-.quick-actions{padding:10px 30px 10px}
+.quick-actions{padding:5px 30px 10px}
 .action-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px 10px}
 .action-icon{display:flex;flex-direction:column;align-items:center;text-decoration:none;cursor:pointer;background:none;border:none;font-family:'Sarabun',sans-serif;padding:0}
 .action-icon .circle { border-radius: 50%;display: flex;align-items: center;justify-content: center;font-size: 25px;transition: transform .15s ease, box-shadow .15s ease;}
-/* .action-icon:hover .circle{transform:translateY(-3px) scale(1.04);box-shadow:0 6px 14px rgba(0,0,0,.12)} */
+.action-icon:hover .circle{transform:translateY(-3px) scale(1.04)}
 .action-icon .cap{font-size:10px;color:#6b7280;font-weight:700;text-align:center;line-height:1.2;max-width:62px}
 .action-icon.green .circle{color:#15803d}
-/* .action-icon.green:hover .circle{box-shadow:0 6px 14px rgba(22,163,74,.25)} */
+.action-icon.green:hover .circle{transform:translateY(-3px) scale(1.04)}
 .action-icon.blue .circle{color:#1e40af}
-/* .action-icon.blue:hover .circle{box-shadow:0 6px 14px rgba(30,64,175,.2)} */
+.action-icon.blue:hover .circle{transform:translateY(-3px) scale(1.04)}
 
 /* ── quick-link-btn — ยังใช้ใน LINE modal (ปุ่มเปิดลิงก์แชร์) ── */
 .quick-link-btn{display:block;text-align:center;background:#f0fdf4;color:#15803d;border-radius:9px;padding:10px 6px;font-size:13px;font-weight:700;text-decoration:none;border:1px solid #bbf7d0}
