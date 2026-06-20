@@ -106,6 +106,7 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
   background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;
   box-shadow:0 8px 20px rgba(22,163,74,.35);transform:translateY(-2px);
 }
+.tab-noti{position:absolute;top:6px;right:10px;background:#dc2626;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 1px 4px rgba(220,38,38,.4)}
 
 /* ── ranking cards ── */
 .rank-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
@@ -212,6 +213,15 @@ td:has(.doc-thumbs){max-width:none;overflow:visible}
 .img-gallery img{width:64px;height:64px;border-radius:6px;object-fit:cover;cursor:pointer;border:1px solid #e5e7eb;flex-shrink:0}
 .img-gallery.empty{color:#9ca3af;font-size:12px;padding:8px 0}
 
+/* ── image gallery แบบจัดการได้ (อัพโหลด/ลบทีละรูป) — doc_urls/stat_urls ── */
+.img-gallery-edit{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0}
+.img-item{position:relative;width:64px;height:64px;flex-shrink:0}
+.img-item img{width:100%;height:100%;border-radius:6px;object-fit:cover;cursor:pointer;border:1px solid #e5e7eb}
+.img-del-btn{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#dc2626;color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.img-del-btn:hover{background:#b91c1c}
+.add-img-btn{width:64px;height:64px;border-radius:6px;border:1.5px dashed #86efac;background:#f0fdf4;color:#16a34a;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px}
+.add-img-btn:hover{background:#dcfce7}
+
 /* ── copy-only button (gen_code ในโหมดการเงิน) ── */
 .copy-only-btn{width:100%;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:10px;border:1.5px dashed #86efac;border-radius:6px;background:#f0fdf4;color:#16a34a;cursor:pointer}
 .copy-only-btn:hover{background:#dcfce7}
@@ -258,7 +268,10 @@ td:has(.doc-thumbs){max-width:none;overflow:visible}
     <button class="view-tab active" id="tab-table" onclick="switchView('table')"><span class="tab-icon"><i class="fa-solid fa-table-list"></i></span><span>ตารางงาน</span></button>
     <button class="view-tab" id="tab-rank" onclick="switchView('rank')"><span class="tab-icon"><i class="fa-solid fa-trophy"></i></span><span>Ranking</span></button>
     <button class="view-tab" id="tab-finance" onclick="switchView('finance')"><span class="tab-icon"><i class="fa-solid fa-sack-dollar"></i></span><span>การเงิน</span></button>
-    <button class="view-tab" id="tab-directory" onclick="switchView('directory')"><span class="tab-icon"><i class="fa-solid fa-users"></i></span><span>ฐานข้อมูล</span></button>
+    <button class="view-tab" id="tab-directory" onclick="switchView('directory')" style="position:relative">
+      <span class="tab-icon"><i class="fa-solid fa-users"></i></span><span>ฐานข้อมูล</span>
+      <span class="tab-noti" id="tab-directory-noti" style="display:none">0</span>
+    </button>
   </div>
 
   <div id="view-table">
@@ -420,10 +433,13 @@ async function gasPost(payload) {
     LIFF_ID = c.liff_id_backend || cfg.liff_id_backend || c.liff_id || cfg.liff_id || '';
     if (!LIFF_ID) { hideSpinner(); setGate('ตั้งค่าไม่ครบ','ไม่พบ liff_id','', true); return; }
 
-    // โลโก้แทนข้อความ — ถ้าตั้งค่า backend_logo_url ไว้ในชีท config
+    // โลโก้/ชื่อแบรนด์ — ถ้าตั้งค่าไว้ในชีท config: โลโก้มาก่อน ถ้าไม่มีค่อยใช้ชื่อกำหนดเอง
     const logoUrl = c.backend_logo_url || cfg.backend_logo_url || '';
+    const brandName = c.backend_brand_name || cfg.backend_brand_name || '';
     if (logoUrl) {
       el('brand-text').outerHTML = `<img src="${logoUrl}" class="brand-logo" alt="logo"/>`;
+    } else if (brandName) {
+      el('brand-text').textContent = brandName;
     }
 
     // 2) LINE login
@@ -463,12 +479,28 @@ async function gasPost(payload) {
     rb.className = 'role-badge ' + (me.role === 'admin' ? 'admin' : 'viewer');
 
     await loadTable();
+    loadPendingCount(); // ไม่ await — ให้โหลดพื้นหลังไม่บล็อกหน้าจอ
 
   } catch (err) {
     hideSpinner();
     setGate('เกิดข้อผิดพลาด', err.message || 'ลองใหม่อีกครั้ง', '', true);
   }
 })();
+
+// ── noti แดงปุ่มฐานข้อมูล: นับงานที่ยังไม่จ่ายเงิน ──
+async function loadPendingCount() {
+  try {
+    const res = await gasPost({ action:'bk_pendingCount', lineId: me.lineId });
+    if (!res.success) return;
+    const badge = el('tab-directory-noti');
+    if (res.count > 0) {
+      badge.textContent = res.count > 99 ? '99+' : res.count;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (err) { /* เงียบไว้ ไม่รบกวนถ้าโหลดไม่ได้ */ }
+}
 
 // ══════════════════════ ตาราง CRUD ══════════════════════
 let TABLE_COLS = [];
@@ -548,12 +580,6 @@ function renderCellValue(c, val, row) {
   if (c.key === 'timestamp' || c.key === 'paid_date') {
     return val ? escapeHtml(formatTsCompact(val)) : '—';
   }
-  // เอกสาร/Stat (หลายรูป คั่นด้วย comma) — บังคับด้วย key เสมอ ไม่ต้องพึ่งค่า type จากชีท (กันบั๊กตั้งค่าผิด)
-  if (c.key === 'doc_urls' || c.key === 'stat_urls') {
-    const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
-    if (!urls.length) return '—';
-    return `<div class="doc-thumbs">${urls.map(u=>`<img class="row-thumb" src="${u}" onclick="openLightbox('${u}', event)"/>`).join('')}</div>`;
-  }
   // เจนโค้ด — ในตารางงานไม่โชว์ค่า (ยาวเกินไปไม่มีประโยชน์) โชว์แค่ปุ่ม copy
   if (c.key === 'gen_code') {
     if (!val) return '—';
@@ -569,9 +595,14 @@ function renderCellValue(c, val, row) {
     if (c.key === 'status') return statusBadge(String(val));
     return `<span class="rstatus" style="display:inline-block">${escapeHtml(String(val))}</span>`;
   }
-  // สลิป (รูปเดียว)
+  // รูปภาพ — อ่านจาก type='image' ตามที่ตั้งในชีทเสมอ รองรับทั้งรูปเดียวและหลายรูป (คั่นด้วย comma) อัตโนมัติ
   if (c.type === 'image') {
-    return val ? `<img class="row-thumb" src="${val}" onclick="openLightbox('${val}', event)"/>` : '—';
+    const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
+    if (!urls.length) return '—';
+    if (urls.length === 1) {
+      return `<img class="row-thumb" src="${urls[0]}" onclick="openLightbox('${urls[0]}', event)"/>`;
+    }
+    return `<div class="doc-thumbs">${urls.map(u=>`<img class="row-thumb" src="${u}" onclick="openLightbox('${u}', event)"/>`).join('')}</div>`;
   }
   // ชื่อ LINE — แทรกปุ่ม 💬 เปิด LINE modal
   if (c.key === 'line_name' && row) {
@@ -831,18 +862,22 @@ async function openEditModal(rowIndex, mode) {
             <input type="range" class="rating-slider" min="0" max="5" step="0.1" value="${n}"
               oninput="onRatingSlide(this, '${c.key}')" ${c.editable?'':'disabled'}/>
           </div></div>`;
-      } else if (c.key === 'doc_urls' || c.key === 'stat_urls') {
-        // doc_urls / stat_urls — แกลเลอรี่หลายรูป บังคับด้วย key เสมอ (กันบั๊กตั้ง type ผิดในชีท)
-        const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
-        if (urls.length) {
-          let imgs = urls.map(u => `<img src="${u}" onclick="openLightbox('${u}', event)"/>`).join('');
-          html += `<div class="pf-field"><label>${c.label}</label><div class="img-gallery">${imgs}</div></div>`;
-        } else {
-          html += `<div class="pf-field"><label>${c.label}</label><div class="img-gallery empty">ไม่มีรูป</div></div>`;
-        }
       } else if (c.type === 'image') {
-        // slip_url (อัพโหลดได้) vs line_profile_drive_url (แสดงอย่างเดียว)
-        if (c.editable) {
+        // slip_url: รูปเดียว อัพโหลดแล้วแทนที่ค่าเดิม
+        // doc_urls/stat_urls: หลายรูป จัดการได้ทีละใบ (เพิ่ม/ลบ) เหมือนสลิปแต่เป็นลิสต์
+        if (c.key === 'doc_urls' || c.key === 'stat_urls') {
+          const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
+          const items = urls.map(u => `<div class="img-item">
+              <img src="${u}" onclick="openLightbox('${u}', event)"/>
+              <button type="button" class="img-del-btn" onclick="deleteDocImage('${c.key}','${u}',this)"><i class="fa-solid fa-xmark"></i></button>
+            </div>`).join('');
+          const addBtn = c.editable ? `<label class="add-img-btn">
+              <i class="fa-solid fa-plus"></i>
+              <input type="file" accept="image/*" style="display:none" onchange="uploadDocImage(this,'${c.key}')"/>
+            </label>` : '';
+          html += `<div class="pf-field"><label>${c.label}</label>
+            <div class="img-gallery-edit" id="ige-${c.key}">${items}${addBtn}</div></div>`;
+        } else if (c.editable) {
           const imgPreview = val ? `<img src="${val}" onclick="openLightbox('${val}', event)"/>` : '';
           html += `<div class="pf-field"><label>${c.label}</label>
             <div class="slip-box" data-key="${c.key}" data-type="image" data-value="${val||''}">
@@ -905,6 +940,56 @@ async function uploadSlipFile(input) {
   reader.readAsDataURL(file);
 }
 
+// ── เอกสาร/Stat — เพิ่มรูปใหม่เข้า list (ไม่ทับของเดิม) ──
+async function uploadDocImage(input, key) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    try {
+      const res = await gasPost({
+        action:'bk_uploadDocImage', lineId: me.lineId, rowIndex: EDIT_ROW_INDEX,
+        key, base64Data: base64, fileName: file.name, mimeType: file.type
+      });
+      if (!res.success) throw new Error(res.error || 'อัพโหลดไม่สำเร็จ');
+      // เพิ่มรูปใหม่เข้า DOM ทันที ไม่ต้องโหลดใหม่ทั้ง modal
+      const container = el('ige-' + key);
+      const addBtn = container.querySelector('.add-img-btn');
+      const item = document.createElement('div');
+      item.className = 'img-item';
+      item.innerHTML = `<img src="${res.url}" onclick="openLightbox('${res.url}', event)"/>
+        <button type="button" class="img-del-btn" onclick="deleteDocImage('${key}','${res.url}',this)"><i class="fa-solid fa-xmark"></i></button>`;
+      container.insertBefore(item, addBtn);
+      // sync TABLE_ROWS เผื่อตารางต้องอัพเดทพอปิด modal
+      const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
+      if (row && row[key] !== undefined) row[key] = res.allUrls;
+    } catch (err) {
+      alert('อัพโหลดรูปไม่สำเร็จ: ' + err.message);
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── เอกสาร/Stat — ลบรูปทีละใบ ──
+async function deleteDocImage(key, url, btnEl) {
+  if (!confirm('ลบรูปนี้?')) return;
+  try {
+    const res = await gasPost({
+      action:'bk_deleteImage', lineId: me.lineId, rowIndex: EDIT_ROW_INDEX,
+      key, url
+    });
+    if (!res.success) throw new Error(res.error || 'ลบไม่สำเร็จ');
+    btnEl.closest('.img-item').remove();
+    const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
+    if (row && row[key] !== undefined) row[key] = res.allUrls;
+  } catch (err) {
+    alert('ลบรูปไม่สำเร็จ: ' + err.message);
+  }
+}
+
 function closeEditModal() {
   el('edit-modal').classList.remove('active');
   EDIT_ROW_INDEX = null;
@@ -946,6 +1031,7 @@ async function saveEditModal() {
     } else if (CURRENT_MODAL_MODE === 'ranking') {
       await loadRanking();
     }
+    loadPendingCount(); // อัพเดท noti แดงเผื่อสถานะเปลี่ยน
 
     closeEditModal();
   } catch (err) {
