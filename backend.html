@@ -32,6 +32,30 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 .role-badge.admin{background:#dcfce7;color:#15803d}
 .role-badge.viewer{background:#e0e7ff;color:#4338ca}
 .placeholder{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:48px 24px;text-align:center;color:#9ca3af;font-size:14px}
+
+/* ── toolbar: search + filter ── */
+.toolbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{font-family:'Sarabun',sans-serif;border:1.5px solid #e5e7eb;border-radius:5px;padding:8px 12px;font-size:13px;outline:none;background:#fafafa}
+.toolbar input:focus,.toolbar select:focus{border-color:#16a34a;background:#fff}
+.toolbar input{flex:1;min-width:160px}
+.toolbar .count{font-size:12px;color:#888;white-space:nowrap}
+
+/* ── table ── */
+.table-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+thead th{background:#f0fdf4;color:#15803d;font-weight:600;text-align:left;padding:10px 12px;white-space:nowrap;border-bottom:2px solid #dcfce7;position:sticky;top:0}
+tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+tbody tr:hover{background:#fafafa}
+td.editable{cursor:pointer}
+td.editable:hover{background:#f0fdf4}
+td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;border-radius:4px;padding:4px 6px;font-size:13px;outline:none}
+.row-actions{display:flex;gap:6px}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:4px 6px;border-radius:4px;line-height:1}
+.icon-btn:hover{background:#f1f5f9}
+.icon-btn.danger:hover{background:#fef2f2}
+.empty-row td{text-align:center;color:#9ca3af;padding:40px;font-size:13px}
+.loading-row td{text-align:center;color:#9ca3af;padding:30px}
 </style>
 </head>
 <body>
@@ -58,8 +82,17 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
       </div>
     </div>
   </div>
-  <div class="placeholder">
-    ✅ เข้าสู่ระบบสำเร็จ — เฟสถัดไปจะเพิ่มตารางงาน, ค้นหา, CRUD ที่นี่
+  <div class="toolbar">
+    <input id="search-box" type="text" placeholder="🔍 ค้นหา ชื่อเล่น / TikTok / เบอร์..." oninput="renderTable()"/>
+    <span class="count" id="row-count"></span>
+  </div>
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead id="thead-row"><tr><th>กำลังโหลด...</th></tr></thead>
+        <tbody id="tbody-rows"><tr class="loading-row"><td>กำลังโหลดข้อมูล…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -135,11 +168,122 @@ async function gasPost(payload) {
     rb.textContent = me.role === 'admin' ? 'ผู้ดูแล (admin)' : 'ผู้ชม (viewer)';
     rb.className = 'role-badge ' + (me.role === 'admin' ? 'admin' : 'viewer');
 
+    await loadTable();
+
   } catch (err) {
     hideSpinner();
     setGate('เกิดข้อผิดพลาด', err.message || 'ลองใหม่อีกครั้ง', '', true);
   }
 })();
+
+// ══════════════════════ ตาราง CRUD ══════════════════════
+let TABLE_COLS = [];
+let TABLE_ROWS = [];
+
+async function loadTable() {
+  try {
+    const res = await gasPost({ action:'bk_list', lineId: me.lineId });
+    if (!res.success) throw new Error(res.error || 'โหลดข้อมูลไม่สำเร็จ');
+    TABLE_COLS = res.columns;
+    TABLE_ROWS = res.rows;
+    buildHeader();
+    renderTable();
+  } catch (err) {
+    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="10">⚠️ ${err.message}</td></tr>`;
+  }
+}
+
+function buildHeader() {
+  let html = '<tr>';
+  TABLE_COLS.forEach(c => { html += `<th>${c.label}</th>`; });
+  if (me.role === 'admin') html += '<th>จัดการ</th>';
+  html += '</tr>';
+  el('thead-row').innerHTML = html;
+}
+
+function renderTable() {
+  const q = el('search-box').value.trim().toLowerCase();
+  const filtered = !q ? TABLE_ROWS : TABLE_ROWS.filter(row =>
+    TABLE_COLS.some(c => String(row[c.key] ?? '').toLowerCase().includes(q))
+  );
+
+  el('row-count').textContent = filtered.length + ' / ' + TABLE_ROWS.length + ' รายการ';
+
+  if (!filtered.length) {
+    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="${TABLE_COLS.length+1}">ไม่พบข้อมูล</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(row => {
+    html += `<tr data-row="${row._rowIndex}">`;
+    TABLE_COLS.forEach(c => {
+      const val = row[c.key] ?? '';
+      const editableCls = (me.role === 'admin' && c.editable) ? 'editable' : '';
+      html += `<td class="${editableCls}" data-key="${c.key}" onclick="${editableCls ? `startEdit(this, ${row._rowIndex})` : ''}">${escapeHtml(String(val))}</td>`;
+    });
+    if (me.role === 'admin') {
+      html += `<td><div class="row-actions">
+        <button class="icon-btn danger" onclick="deleteRow(${row._rowIndex})" title="ลบ">🗑️</button>
+      </div></td>`;
+    }
+    html += '</tr>';
+  });
+  el('tbody-rows').innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── inline edit: คลิกเซลล์ → กลายเป็น input ── 
+function startEdit(td, rowIndex) {
+  if (td.querySelector('input')) return; // กำลังแก้อยู่แล้ว
+  const key = td.dataset.key;
+  const oldVal = td.textContent;
+  td.innerHTML = `<input type="text" value="${oldVal.replace(/"/g,'&quot;')}"/>`;
+  const input = td.querySelector('input');
+  input.focus();
+  input.select();
+
+  const save = async () => {
+    const newVal = input.value;
+    if (newVal === oldVal) { td.textContent = oldVal; return; }
+    td.textContent = '...';
+    try {
+      const res = await gasPost({
+        action:'bk_update', lineId: me.lineId,
+        rowIndex, updates: JSON.stringify({ [key]: newVal })
+      });
+      if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
+      td.textContent = newVal;
+      // sync ค่าใน TABLE_ROWS เพื่อให้ search ใช้ค่าล่าสุด
+      const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex);
+      if (row) row[key] = newVal;
+    } catch (err) {
+      alert('แก้ไขไม่สำเร็จ: ' + err.message);
+      td.textContent = oldVal;
+    }
+  };
+
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { td.textContent = oldVal; }
+  });
+}
+
+async function deleteRow(rowIndex) {
+  if (!confirm('ยืนยันลบรายการนี้? การลบไม่สามารถย้อนกลับได้')) return;
+  try {
+    const res = await gasPost({ action:'bk_delete', lineId: me.lineId, rowIndex });
+    if (!res.success) throw new Error(res.error || 'ลบไม่สำเร็จ');
+    TABLE_ROWS = TABLE_ROWS.filter(r => r._rowIndex !== rowIndex);
+    renderTable();
+  } catch (err) {
+    alert('ลบไม่สำเร็จ: ' + err.message);
+  }
+}
 </script>
 </body>
 </html>
