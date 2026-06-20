@@ -26,8 +26,8 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 /* ── หน้า dashboard (เฟสต่อไปจะเติม) ── */
 #dashboard{display:none;max-width:960px;margin:0 auto;padding:16px}
 .topbar{border-radius:10px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.topbar .brand{font-size:18px;font-weight:700;color:#16a34a}
-.brand-logo{height:34px;max-width:160px;object-fit:contain}
+.topbar .brand{font-size:18px;font-weight:700;color:#16a34a;cursor:pointer;user-select:none}
+.brand-logo{height:34px;max-width:160px;object-fit:contain;cursor:pointer}
 .topbar .user{display:flex;align-items:center;gap:10px;font-size:13px;color:#444}
 .topbar .user img{width:34px;height:34px;border-radius:50%;object-fit:cover}
 .role-badge{font-size:11px;font-weight:600;border-radius:4px}
@@ -264,7 +264,7 @@ td:has(.doc-thumbs){max-width:none;overflow:visible}
 <!-- DASHBOARD (เฟส 1 แสดงแค่ topbar + placeholder) -->
 <div id="dashboard">
   <div class="topbar">
-    <div class="brand" id="brand-text">Blissé Admin</div>
+    <div class="brand" id="brand-text" onclick="location.reload()" title="รีเฟรชหน้า">Blissé Admin</div>
     <div class="user">
       <img id="u-photo" src="" alt=""/>
       <div>
@@ -462,7 +462,7 @@ async function gasPost(payload) {
     const logoUrl = c.backend_logo_url || cfg.backend_logo_url || '';
     const brandName = c.backend_brand_name || cfg.backend_brand_name || '';
     if (logoUrl) {
-      el('brand-text').outerHTML = `<img src="${logoUrl}" class="brand-logo" alt="logo"/>`;
+      el('brand-text').outerHTML = `<img src="${logoUrl}" class="brand-logo" alt="logo" onclick="location.reload()" title="รีเฟรชหน้า"/>`;
     } else if (brandName) {
       el('brand-text').textContent = brandName;
     }
@@ -753,6 +753,11 @@ async function deleteRow(rowIndex) {
     if (!res.success) throw new Error(res.error || 'ลบไม่สำเร็จ');
     TABLE_ROWS = TABLE_ROWS.filter(r => r._rowIndex !== rowIndex);
     renderTable();
+    // แถวถูกลบจริง — บังคับให้หน้าอื่นโหลดใหม่ครั้งถัดไปที่เปิด (กันข้อมูลค้าง)
+    FIN_LOADED = false;
+    RANK_LOADED = false;
+    DIR_LOADED = false;
+    loadPendingCount();
   } catch (err) {
     alert('ลบไม่สำเร็จ: ' + err.message);
   }
