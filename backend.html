@@ -1,472 +1,626 @@
-/***********************************************************************
- * Backend.gs — ระบบ Admin Dashboard (แยกจาก Code.gs เดิม)
- * ทุก action ขึ้นต้นด้วย bk_ เพื่อไม่ชนกับระบบ influencer เดิม
- * doPost ใน Code.gs route action bk_* มาที่ backendRouter() นี้
- ***********************************************************************/
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Blissé Admin</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:100vh;-webkit-font-smoothing:antialiased}
 
-// ── Router หลักของ backend ──
-function backendRouter(p) {
+/* ── หน้า center (loading / login / denied) ── */
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:32px 24px;max-width:380px;width:100%;text-align:center}
+.spinner{width:42px;height:42px;border:3px solid #e5e7eb;border-top-color:#16a34a;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.big-icon{font-size:52px;margin-bottom:12px}
+.title{font-size:20px;font-weight:700;color:#16a34a;margin-bottom:8px}
+.title.deny{color:#dc2626}
+.sub{font-size:13px;color:#888;line-height:1.6}
+.hint{margin-top:12px;font-size:12px;color:#aaa;word-break:break-all}
+
+/* ── หน้า dashboard (เฟสต่อไปจะเติม) ── */
+#dashboard{display:none;max-width:960px;margin:0 auto;padding:16px}
+.topbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.topbar .brand{font-size:18px;font-weight:700;color:#16a34a}
+.topbar .user{display:flex;align-items:center;gap:10px;font-size:13px;color:#444}
+.topbar .user img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.role-badge{font-size:11px;font-weight:600;border-radius:4px;padding:2px 8px}
+.role-badge.admin{background:#dcfce7;color:#15803d}
+.role-badge.viewer{background:#e0e7ff;color:#4338ca}
+.placeholder{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:48px 24px;text-align:center;color:#9ca3af;font-size:14px}
+
+/* ── toolbar: search + filter ── */
+.toolbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{font-family:'Sarabun',sans-serif;border:1.5px solid #e5e7eb;border-radius:5px;padding:8px 12px;font-size:13px;outline:none;background:#fafafa}
+.toolbar input:focus,.toolbar select:focus{border-color:#16a34a;background:#fff}
+.toolbar input{flex:1;min-width:160px}
+#filter-status{display:none}
+.toolbar .count{font-size:12px;color:#888;white-space:nowrap}
+
+/* ── table ── */
+.table-wrap{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+thead th{background:#f0fdf4;color:#15803d;font-weight:600;text-align:left;padding:10px 12px;white-space:nowrap;border-bottom:2px solid #dcfce7;position:sticky;top:0}
+tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+tbody tr:hover{background:#fafafa}
+td.editable{cursor:pointer}
+td.editable:hover{background:#f0fdf4}
+td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;border-radius:4px;padding:4px 6px;font-size:13px;outline:none}
+.row-actions{display:flex;gap:6px}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:4px 6px;border-radius:4px;line-height:1}
+.icon-btn:hover{background:#f1f5f9}
+.icon-btn.danger:hover{background:#fef2f2}
+.empty-row td{text-align:center;color:#9ca3af;padding:40px;font-size:13px}
+.loading-row td{text-align:center;color:#9ca3af;padding:30px}
+
+/* ── edit modal (การ์ดโปรไฟล์แก้ไขรวด) ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto}
+.modal-overlay.active{display:flex}
+.profile-modal{background:#fff;border-radius:14px;max-width:380px;width:100%;margin-top:30px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2)}
+.profile-modal-head{background:#f0fdf4;padding:20px;text-align:center;position:relative}
+.profile-modal-head .avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1);background:#e5e7eb}
+.profile-modal-head .pname{margin-top:10px;font-weight:700;font-size:17px;color:#15803d}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;color:#888;cursor:pointer;line-height:1}
+.profile-modal-body{padding:18px 20px;max-height:60vh;overflow-y:auto}
+.pf-field{margin-bottom:14px}
+.pf-field label{display:block;font-size:12px;font-weight:600;color:#666;margin-bottom:5px}
+.pf-field input{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:9px 11px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
+.pf-field input:focus{border-color:#16a34a;background:#fff}
+.pf-field input:disabled{background:#f1f5f9;color:#9ca3af;cursor:not-allowed}
+.profile-modal-foot{padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px}
+.btn-modal{flex:1;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;padding:11px;border:none;border-radius:5px;cursor:pointer}
+.btn-modal.save{background:#16a34a;color:#fff}
+.btn-modal.save:hover{background:#15803d}
+.btn-modal.save:disabled{background:#86efac;cursor:not-allowed}
+.btn-modal.cancel{background:#f4f4f5;color:#444}
+
+/* ── view tabs ── */
+.view-tabs{display:flex;gap:8px;margin-bottom:14px}
+.view-tab{font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;background:#fff;color:#666;box-shadow:0 1px 6px rgba(0,0,0,.07)}
+.view-tab.active{background:#16a34a;color:#fff}
+
+/* ── ranking cards ── */
+.rank-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.rank-card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:18px;text-align:center;position:relative}
+.rank-card .medal{position:absolute;top:10px;left:12px;font-size:18px}
+.rank-card img{width:72px;height:72px;border-radius:50%;object-fit:cover;background:#e5e7eb;margin-bottom:10px}
+.rank-card .rname{font-weight:700;font-size:15px;color:#1F1F1F}
+.rank-card .rtiktok{font-size:12px;color:#888;margin-bottom:8px}
+.rank-card .rstars{font-size:15px;color:#fbbf24;letter-spacing:1px}
+.rank-card .rstatus{margin-top:8px;display:inline-block;font-size:11px;font-weight:600;padding:2px 10px;border-radius:99px;background:#f0fdf4;color:#15803d}
+
+/* ── star picker (ใน modal) ── */
+.star-picker{display:flex;gap:4px;font-size:24px}
+.star-picker span{cursor:pointer;color:#e5e7eb}
+.star-picker span.filled{color:#fbbf24}
+
+/* ── select in modal ── */
+.pf-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:9px 11px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
+.pf-field select:focus{border-color:#16a34a;background:#fff}
+
+/* ── slip upload ── */
+.slip-box{display:flex;align-items:center;gap:10px}
+.slip-box img{width:60px;height:60px;border-radius:6px;object-fit:cover;border:1px solid #e5e7eb}
+.slip-box .file-btn-sm{font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px dashed #86efac;border-radius:5px;padding:7px 12px;color:#16a34a;cursor:pointer;background:transparent}
+
+/* ── push message section in modal ── */
+.push-box{background:#f0fdf4;border-radius:8px;padding:12px;margin-top:6px}
+.push-box textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:8px 10px;font-size:13px;font-family:'Sarabun',sans-serif;outline:none;resize:vertical;min-height:60px;background:#fff}
+.push-box textarea:focus{border-color:#16a34a}
+.btn-push{margin-top:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:none;border-radius:5px;cursor:pointer;background:#16a34a;color:#fff}
+.btn-push:disabled{background:#86efac;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<!-- LOADING / LOGIN / DENIED -->
+<div id="gate" class="center">
+  <div class="card">
+    <div class="spinner" id="gate-spin"></div>
+    <div class="title" id="gate-title">กำลังตรวจสอบสิทธิ์…</div>
+    <p class="sub" id="gate-sub">โปรดรอสักครู่</p>
+    <p class="hint" id="gate-hint"></p>
+  </div>
+</div>
+
+<!-- DASHBOARD (เฟส 1 แสดงแค่ topbar + placeholder) -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="brand">Blissé Admin</div>
+    <div class="user">
+      <img id="u-photo" src="" alt=""/>
+      <div>
+        <div id="u-name" style="font-weight:600"></div>
+        <span id="u-role" class="role-badge"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="view-tabs">
+    <button class="view-tab active" id="tab-table" onclick="switchView('table')">📋 ตารางงาน</button>
+    <button class="view-tab" id="tab-rank" onclick="switchView('rank')">🏆 Ranking</button>
+  </div>
+
+  <div id="view-table">
+    <div class="toolbar">
+      <input id="search-box" type="text" placeholder="🔍 ค้นหา ชื่อเล่น / TikTok / เบอร์..." oninput="renderTable()"/>
+      <select id="filter-status" onchange="renderTable()">
+        <option value="">ทุกสถานะ</option>
+      </select>
+      <span class="count" id="row-count"></span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead id="thead-row"><tr><th>กำลังโหลด...</th></tr></thead>
+          <tbody id="tbody-rows"><tr class="loading-row"><td>กำลังโหลดข้อมูล…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-rank" style="display:none">
+    <div class="rank-grid" id="rank-grid">
+      <div class="placeholder">กำลังโหลด...</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- EDIT MODAL — การ์ดโปรไฟล์แก้ไขรวด -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="profile-modal">
+    <div class="profile-modal-head">
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+      <img class="avatar" id="pm-avatar" src="" alt=""/>
+      <div class="pname" id="pm-name"></div>
+    </div>
+    <div class="profile-modal-body" id="pm-fields"></div>
+    <div class="push-box" style="margin:0 20px 16px">
+      <label style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px;display:block">💬 ส่งข้อความถึง influencer</label>
+      <textarea id="push-text" placeholder="พิมพ์ข้อความ..."></textarea>
+      <button class="btn-push" id="push-btn" onclick="sendPushMessage()">📤 ส่งข้อความ</button>
+    </div>
+    <div class="profile-modal-foot">
+      <button class="btn-modal cancel" onclick="closeEditModal()">ยกเลิก</button>
+      <button class="btn-modal save" id="pm-save-btn" onclick="saveEditModal()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyX3Jms83O3DDYV6_9bsDptFsAWG5BinutE9Am9HrRD3oIDT79TI1zOZA5NBviO9zYi/exec';
+
+// LIFF ID — ใช้ตัวเดียวกับฟอร์มหลัก (login ผ่าน LINE)
+// จะดึงจาก getConfig (liff_id) เพื่อไม่ต้อง hardcode
+let LIFF_ID = '';
+let me = { lineId:'', name:'', role:'', photo:'' };
+
+const el = (id) => document.getElementById(id);
+
+function setGate(title, sub, hint, deny) {
+  el('gate-title').textContent = title;
+  el('gate-title').className = 'title' + (deny ? ' deny' : '');
+  el('gate-sub').textContent = sub || '';
+  el('gate-hint').textContent = hint || '';
+}
+function hideSpinner(){ const s=el('gate-spin'); if(s) s.style.display='none'; }
+
+async function gasPost(payload) {
+  const r = await fetch(GAS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams(payload)
+  });
+  return r.json();
+}
+
+(async () => {
   try {
-    switch (p.action) {
-      case 'bk_setup':       return bkSetupSheets();
-      case 'bk_login':       return bkLogin(p);
-      case 'bk_list':        return bkList(p);
-      case 'bk_update':      return bkUpdate(p);
-      case 'bk_delete':      return bkDelete(p);
-      case 'bk_getRow':      return bkGetRow(p);
-      case 'bk_uploadSlip':  return bkUploadSlip(p);
-      case 'bk_push':        return bkPush(p);
-      case 'bk_ranking':     return bkRanking(p);
-      default: return bkJson({success:false, error:'Unknown backend action: '+p.action});
+    // 1) ดึง liff_id จาก config — ใช้ liff_id_backend ก่อน (ถ้ามี) ไม่งั้น fallback liff_id เดิม
+    setGate('กำลังโหลด…','กำลังดึงการตั้งค่า');
+    const cfg = await gasPost({action:'getConfig'});
+    const c = cfg.config || cfg;
+    LIFF_ID = c.liff_id_backend || cfg.liff_id_backend || c.liff_id || cfg.liff_id || '';
+    if (!LIFF_ID) { hideSpinner(); setGate('ตั้งค่าไม่ครบ','ไม่พบ liff_id','', true); return; }
+
+    // 2) LINE login
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    const profile = await liff.getProfile();
+    me.lineId = profile.userId;
+    me.name   = profile.displayName;
+    me.photo  = profile.pictureUrl || '';
+
+    // 3) เช็คสิทธิ์ฝั่ง GAS (whitelist)
+    setGate('กำลังตรวจสอบสิทธิ์…','');
+    const res = await gasPost({ action:'bk_login', lineId:me.lineId, lineName:me.name });
+
+    if (!res.success || !res.granted) {
+      // ไม่มีสิทธิ์ — แจ้ง + (GAS บันทึก log แล้ว)
+      hideSpinner();
+      setGate('ไม่มีสิทธิ์เข้าถึง', 'บัญชี LINE ของคุณไม่อยู่ในรายชื่อผู้ดูแล', 'LINE ID: '+me.lineId, true);
+      el('big') && (el('big').textContent = '🚫');
+      // เปลี่ยน spinner เป็นไอคอนห้าม
+      const card = document.querySelector('#gate .card');
+      const icon = document.createElement('div');
+      icon.className = 'big-icon'; icon.textContent = '🚫';
+      card.insertBefore(icon, card.firstChild);
+      return;
     }
-  } catch(err) {
-    return bkJson({success:false, error:err.message});
+
+    // 4) ผ่าน — เข้า dashboard
+    me.role = res.role || 'viewer';
+    me.name = res.name || me.name;
+    el('gate').style.display = 'none';
+    el('dashboard').style.display = 'block';
+    el('u-photo').src = me.photo;
+    el('u-name').textContent = me.name;
+    const rb = el('u-role');
+    rb.textContent = me.role === 'admin' ? 'ผู้ดูแล (admin)' : 'ผู้ชม (viewer)';
+    rb.className = 'role-badge ' + (me.role === 'admin' ? 'admin' : 'viewer');
+
+    await loadTable();
+
+  } catch (err) {
+    hideSpinner();
+    setGate('เกิดข้อผิดพลาด', err.message || 'ลองใหม่อีกครั้ง', '', true);
+  }
+})();
+
+// ══════════════════════ ตาราง CRUD ══════════════════════
+let TABLE_COLS = [];
+let TABLE_ROWS = [];
+
+async function loadTable() {
+  try {
+    const res = await gasPost({ action:'bk_list', lineId: me.lineId });
+    if (!res.success) throw new Error(res.error || 'โหลดข้อมูลไม่สำเร็จ');
+    TABLE_COLS = res.columns;
+    TABLE_ROWS = res.rows;
+    buildHeader();
+    buildStatusFilter();
+    renderTable();
+  } catch (err) {
+    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="10">⚠️ ${err.message}</td></tr>`;
   }
 }
 
-// ── helper: JSON response ──
-function bkJson(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+// เติม dropdown กรองสถานะ จาก options ของคอลัมน์ status (ถ้ามีโชว์ในตาราง)
+function buildStatusFilter() {
+  const statusCol = TABLE_COLS.find(c => c.key === 'status' && c.type === 'select');
+  const sel = el('filter-status');
+  if (!statusCol) { sel.style.display = 'none'; return; }
+  sel.style.display = 'inline-block';
+  let html = '<option value="">ทุกสถานะ</option>';
+  statusCol.options.forEach(o => { html += `<option value="${o}">${o}</option>`; });
+  sel.innerHTML = html;
 }
 
-// ── helper: เวลาปัจจุบัน format ไทย ──
-function bkNow() {
-  return Utilities.formatDate(new Date(), 'Asia/Bangkok', 'yyyy-MM-dd HH:mm:ss');
+// สีของแต่ละสถานะ — ให้แยกแยะง่ายด้วยตา
+const STATUS_COLORS = {
+  'รอตรวจสอบ':   { bg:'#fef3c7', fg:'#92400e' },
+  'อนุมัติแล้ว':  { bg:'#dbeafe', fg:'#1e40af' },
+  'เข้าคิวจ่าย':  { bg:'#ede9fe', fg:'#5b21b6' },
+  'จ่ายเงินแล้ว': { bg:'#dcfce7', fg:'#15803d' },
+  'ตีกลับ':       { bg:'#fee2e2', fg:'#b91c1c' }
+};
+function statusBadge(val) {
+  const c = STATUS_COLORS[val] || { bg:'#f1f5f9', fg:'#475569' };
+  return `<span class="rstatus" style="background:${c.bg};color:${c.fg};display:inline-block">${escapeHtml(val)}</span>`;
 }
 
-/***********************************************************************
- * SETUP — สร้างชีท auth + auth_log (รันครั้งเดียวตอนติดตั้ง)
- * เรียกผ่าน: bk_setup หรือรันฟังก์ชัน bkSetupSheets() ตรงๆ ใน editor
- ***********************************************************************/
-function bkSetupSheets() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+function buildHeader() {
+  let html = '<tr>';
+  TABLE_COLS.forEach(c => { html += `<th>${c.label}</th>`; });
+  if (me.role === 'admin') html += '<th>จัดการ</th>';
+  html += '</tr>';
+  el('thead-row').innerHTML = html;
+}
 
-  // ---- เพิ่ม key liff_id_backend ในชีท config (ถ้ายังไม่มี) ----
-  var cfgSheet = ss.getSheetByName('config');
-  if (cfgSheet) {
-    var cfgData = cfgSheet.getDataRange().getValues();
-    var hasKey = false;
-    for (var r=0; r<cfgData.length; r++) {
-      if (String(cfgData[r][0]).trim() === 'liff_id_backend') { hasKey = true; break; }
+// แสดงค่าตาม type ของคอลัมน์ (status=badge, stars=ดาว, image=ลิงก์, text=ปกติ)
+function renderCellValue(c, val) {
+  if (c.type === 'stars') {
+    const n = Number(val) || 0;
+    return n > 0 ? '⭐'.repeat(n) : '—';
+  }
+  if (c.type === 'select' && val) {
+    if (c.key === 'status') return statusBadge(String(val));
+    return `<span class="rstatus" style="display:inline-block">${escapeHtml(String(val))}</span>`;
+  }
+  if (c.type === 'image') {
+    return val ? `<a href="${val}" target="_blank" onclick="event.stopPropagation()">📎 ดูสลิป</a>` : '—';
+  }
+  return escapeHtml(String(val ?? '') || '—');
+}
+
+function renderTable() {
+  const q = el('search-box').value.trim().toLowerCase();
+  const statusFilter = el('filter-status').value;
+
+  let filtered = !q ? TABLE_ROWS : TABLE_ROWS.filter(row =>
+    TABLE_COLS.some(c => String(row[c.key] ?? '').toLowerCase().includes(q))
+  );
+  if (statusFilter) {
+    filtered = filtered.filter(row => String(row.status || '') === statusFilter);
+  }
+
+  el('row-count').textContent = filtered.length + ' / ' + TABLE_ROWS.length + ' รายการ';
+
+  if (!filtered.length) {
+    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="${TABLE_COLS.length+1}">ไม่พบข้อมูล</td></tr>`;
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(row => {
+    html += `<tr data-row="${row._rowIndex}">`;
+    TABLE_COLS.forEach(c => {
+      const val = row[c.key] ?? '';
+      // inline-edit เฉพาะ type text (select/stars/image แก้ผ่าน modal เท่านั้น — ใช้งานง่ายกว่า)
+      const canInlineEdit = (me.role === 'admin' && c.editable && c.type === 'text');
+      html += `<td class="${canInlineEdit ? 'editable' : ''}" data-key="${c.key}" onclick="${canInlineEdit ? `startEdit(this, ${row._rowIndex})` : ''}">${renderCellValue(c, val)}</td>`;
+    });
+    if (me.role === 'admin') {
+      html += `<td><div class="row-actions">
+        <button class="icon-btn" onclick="openEditModal(${row._rowIndex})" title="แก้ไข">✏️</button>
+        <button class="icon-btn danger" onclick="deleteRow(${row._rowIndex})" title="ลบ">🗑️</button>
+      </div></td>`;
     }
-    if (!hasKey) {
-      cfgSheet.appendRow(['liff_id_backend', '', 'LIFF ID หน้า backend (ว่าง = ใช้ liff_id เดิม)']);
-    }
-  }
+    html += '</tr>';
+  });
+  el('tbody-rows').innerHTML = html;
+}
 
-  // ---- auth (whitelist) ----
-  var auth = ss.getSheetByName('auth') || ss.insertSheet('auth');
-  if (auth.getLastRow() === 0) {
-    auth.getRange(1,1,1,4).setValues([['line_id','name','role','active']]);
-    auth.getRange(1,1,1,4).setFontWeight('bold').setBackground('#16a34a').setFontColor('#FFFFFF');
-    // แถวตัวอย่าง (ใส่ line_id จริงของแอดมินเอง)
-    auth.getRange(2,1,1,4).setValues([['Uxxxxxxxxxxxxxxxx','แอดมินตัวอย่าง','admin','TRUE']]);
-    auth.setColumnWidth(1,260); auth.setColumnWidth(2,160);
-    auth.setColumnWidth(3,90);  auth.setColumnWidth(4,70);
-  }
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-  // ---- auth_log (บันทึกการเข้า) ----
-  var log = ss.getSheetByName('auth_log') || ss.insertSheet('auth_log');
-  if (log.getLastRow() === 0) {
-    log.getRange(1,1,1,4).setValues([['timestamp','line_id','name','result']]);
-    log.getRange(1,1,1,4).setFontWeight('bold').setBackground('#374151').setFontColor('#FFFFFF');
-    log.setColumnWidth(1,160); log.setColumnWidth(2,260); log.setColumnWidth(3,160);
-  }
+// ── inline edit: คลิกเซลล์ (เฉพาะ type=text) → กลายเป็น input ──
+function startEdit(td, rowIndex) {
+  if (td.querySelector('input')) return;
+  const key = td.dataset.key;
+  const oldVal = td.textContent === '—' ? '' : td.textContent;
+  td.innerHTML = `<input type="text" value="${oldVal.replace(/"/g,'&quot;')}"/>`;
+  const input = td.querySelector('input');
+  input.focus();
+  input.select();
 
-  // ---- เพิ่มคอลัมน์ 29-31 ในชีท influencer (status, slip_url, rating) ถ้ายังไม่มี ----
-  var infSheet = ss.getSheetByName('influencer');
-  if (infSheet) {
-    var hdr29 = infSheet.getRange(1,29).getValue();
-    if (!hdr29) {
-      infSheet.getRange(1,29,1,3).setValues([['status','slip_url','rating']]);
-      infSheet.getRange(1,29,1,3).setFontWeight('bold').setBackground('#C8E6C9');
-    }
-  }
-
-  // ---- bk_columns (คุมการแสดง/แก้ไขคอลัมน์ใน dashboard) ----
-  // schema: key | label | show_table | editable | type | options
-  // type: text(default) / select / stars / image
-  var colSheet = ss.getSheetByName('bk_columns');
-  var needFresh = !colSheet;
-
-  // ── migration: ถ้ามีชีทเก่า (schema 4 คอลัมน์ ไม่มี type/options) → อัพเกรดอัตโนมัติ ──
-  if (colSheet && !needFresh) {
-    var hdr = colSheet.getRange(1,1,1,6).getValues()[0];
-    var hasNewSchema = String(hdr[4]).trim().toLowerCase() === 'type';
-    if (!hasNewSchema) {
-      // เก็บค่า show_table/editable เดิมที่แอดมินอาจปรับไว้แล้ว (เก็บตาม key)
-      var oldData = colSheet.getDataRange().getValues();
-      var oldCfg = {};
-      for (var oi=1; oi<oldData.length; oi++) {
-        if (!oldData[oi][0]) continue;
-        oldCfg[String(oldData[oi][0]).trim()] = {
-          show: oldData[oi][2], edit: oldData[oi][3]
-        };
-      }
-      colSheet.clear();
-      needFresh = true; // ไปสร้างใหม่ด้านล่าง แต่จะ merge ค่าเดิมกลับเข้าไป
-    }
-  }
-
-  if (needFresh) {
-    if (!colSheet) colSheet = ss.insertSheet('bk_columns');
-    colSheet.getRange(1,1,1,6).setValues([['key','label','show_table','editable','type','options']]);
-    colSheet.getRange(1,1,1,6).setFontWeight('bold').setBackground('#16a34a').setFontColor('#FFFFFF');
-    // default config — col สำคัญโชว์+แก้ได้, col ระบบซ่อน+ล็อก
-    var defaults = [
-      ['timestamp','เวลาส่ง','TRUE','FALSE','text',''],
-      ['line_name','ชื่อ LINE','TRUE','FALSE','text',''],
-      ['nickname','ชื่อเล่น','TRUE','TRUE','text',''],
-      ['tiktok','TikTok','TRUE','TRUE','text',''],
-      ['phone','เบอร์โทร','TRUE','TRUE','text',''],
-      ['creator_tag','Creator Tag','TRUE','FALSE','text',''],
-      ['status','สถานะ','TRUE','TRUE','select','รอตรวจสอบ,อนุมัติแล้ว,เข้าคิวจ่าย,จ่ายเงินแล้ว,ตีกลับ'],
-      ['rating','คะแนน','TRUE','TRUE','stars',''],
-      ['bank_name','ธนาคาร','TRUE','TRUE','text',''],
-      ['bank_account','เลขบัญชี','TRUE','TRUE','text',''],
-      ['account_name','ชื่อบัญชี','TRUE','TRUE','text',''],
-      ['amount','จำนวนเงิน','TRUE','TRUE','text',''],
-      ['slip_url','สลิปโอนเงิน','FALSE','TRUE','image',''],
-      ['gen_code','เจนโค้ด','TRUE','TRUE','text',''],
-      ['post_link_1_platform','ช่องทาง 1','FALSE','TRUE','text',''],
-      ['post_link_1_url','ลิงก์ 1','FALSE','TRUE','text',''],
-      ['post_link_2_platform','ช่องทาง 2','FALSE','TRUE','text',''],
-      ['post_link_2_url','ลิงก์ 2','FALSE','TRUE','text',''],
-      ['line_id','LINE ID','FALSE','FALSE','text',''],
-      ['line_photo','รูป LINE','FALSE','FALSE','text',''],
-      ['folder_id','โฟลเดอร์','FALSE','FALSE','text',''],
-      ['doc_urls','เอกสาร','FALSE','FALSE','text',''],
-      ['stat_urls','Stat','FALSE','FALSE','text',''],
-      ['flex_json','(ระบบ) flex','FALSE','FALSE','text',''],
-      ['share_url','(ระบบ) share','FALSE','FALSE','text',''],
-      ['flex_id','(ระบบ) flexId','FALSE','FALSE','text','']
-    ];
-    // merge ค่าเดิมที่แอดมินปรับไว้ (ถ้ามี) กลับเข้าไปแทนค่า default
-    if (typeof oldCfg !== 'undefined') {
-      defaults.forEach(function(row){
-        var prev = oldCfg[row[0]];
-        if (prev) { row[2] = prev.show; row[3] = prev.edit; }
+  const save = async () => {
+    const newVal = input.value;
+    if (newVal === oldVal) { td.textContent = oldVal || '—'; return; }
+    td.textContent = '...';
+    try {
+      const res = await gasPost({
+        action:'bk_update', lineId: me.lineId,
+        rowIndex, updates: JSON.stringify({ [key]: newVal })
       });
+      if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
+      td.textContent = newVal || '—';
+      const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex);
+      if (row) row[key] = newVal;
+    } catch (err) {
+      alert('แก้ไขไม่สำเร็จ: ' + err.message);
+      td.textContent = oldVal || '—';
     }
-    colSheet.getRange(2,1,defaults.length,6).setValues(defaults);
-    colSheet.setColumnWidth(1,180); colSheet.setColumnWidth(2,140); colSheet.setColumnWidth(6,260);
-  }
-
-  return bkJson({success:true, message:'สร้างชีท auth + auth_log + bk_columns เรียบร้อย'});
-}
-
-// ── map คอลัมน์ influencer: key → index (0-based) ──
-function bkColIndex() {
-  return {
-    timestamp:0, line_id:1, line_name:2, line_photo:3,
-    nickname:4, tiktok:5, phone:6, creator_tag:7,
-    folder_id:8, folder_final_id:9, folder_footage_id:10, folder_stat_id:11,
-    line_profile_drive_url:12, doc_urls:13,
-    bank_name:14, bank_account:15, account_name:16, amount:17,
-    gen_code:18, stat_urls:19,
-    post_link_1_platform:20, post_link_1_url:21,
-    post_link_2_platform:22, post_link_2_url:23,
-    flex_json:24, share_url:25, flex_id:26, altText:27,
-    status:28, slip_url:29, rating:30
   };
-}
 
-// ── อ่าน column config จากชีท bk_columns ──
-function bkGetColumns() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('bk_columns');
-  if (!sheet) return [];
-  var data = sheet.getDataRange().getValues();
-  var cols = [];
-  for (var i=1; i<data.length; i++) {
-    if (!data[i][0]) continue;
-    cols.push({
-      key: String(data[i][0]).trim(),
-      label: data[i][1] || data[i][0],
-      showTable: String(data[i][2]).toUpperCase() !== 'FALSE',
-      editable: String(data[i][3]).toUpperCase() !== 'FALSE',
-      type: (data[i][4] || 'text').toString().trim().toLowerCase(),
-      options: data[i][5] ? String(data[i][5]).split(',').map(function(s){return s.trim();}).filter(Boolean) : []
-    });
-  }
-  return cols;
-}
-
-/***********************************************************************
- * AUTH — ตรวจสิทธิ์เข้า dashboard
- * รับ: lineId, lineName
- * คืน: { success, granted, role, name }  + บันทึก auth_log
- ***********************************************************************/
-function bkLogin(p) {
-  var lineId   = p.lineId || '';
-  var lineName = p.lineName || '';
-  if (!lineId) return bkJson({success:false, error:'no lineId'});
-
-  var auth = bkCheckWhitelist(lineId);
-
-  // บันทึก log ทุกครั้ง (granted/denied)
-  bkWriteAuthLog(lineId, lineName || (auth ? auth.name : ''), auth ? 'granted' : 'denied');
-
-  if (!auth) {
-    return bkJson({success:true, granted:false});
-  }
-  return bkJson({success:true, granted:true, role:auth.role, name:auth.name});
-}
-
-// ── เช็ค whitelist → คืน {name, role} ถ้าผ่าน, null ถ้าไม่ผ่าน ──
-// อ่านชีท auth ครั้งเดียว — เบา ไม่หน่วง
-function bkCheckWhitelist(lineId) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('auth');
-  if (!sheet) return null;
-  var data = sheet.getDataRange().getValues();
-  for (var i=1; i<data.length; i++) {
-    var rowId   = String(data[i][0]).trim();
-    var active  = String(data[i][3]).toUpperCase() !== 'FALSE'; // ว่าง/TRUE = active
-    if (rowId === String(lineId).trim() && active) {
-      return {
-        name: data[i][1] || '',
-        role: (data[i][2] || 'viewer').toString().trim().toLowerCase()  // admin/viewer
-      };
-    }
-  }
-  return null;
-}
-
-// ── เขียน auth_log ──
-function bkWriteAuthLog(lineId, name, result) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('auth_log');
-  if (!sheet) return;
-  sheet.appendRow([bkNow(), lineId, name, result]);
-}
-
-/***********************************************************************
- * GUARD — ใช้ใน action อื่นๆ ทุกตัว (เฟสต่อไป)
- * เช็คสิทธิ์ฝั่ง GAS ทุก action — กันคนยิง GAS ตรงข้าม login
- * adminOnly=true → ต้องเป็น role admin เท่านั้น (เช่น แก้/ลบ/จ่ายเงิน)
- * คืน auth object ถ้าผ่าน, throw ถ้าไม่ผ่าน
- ***********************************************************************/
-function bkGuard(p, adminOnly) {
-  var auth = bkCheckWhitelist(p.lineId || '');
-  if (!auth) throw new Error('ไม่มีสิทธิ์เข้าถึง (unauthorized)');
-  if (adminOnly && auth.role !== 'admin') throw new Error('ต้องเป็น admin เท่านั้น');
-  return auth;
-}
-
-/***********************************************************************
- * เฟส 2 — CRUD ตาราง influencer
- ***********************************************************************/
-
-// ── LIST — ดึงข้อมูล influencer ทั้งหมด + column config ──
-// คืนเฉพาะคอลัมน์ที่ showTable + ทุกแถว (พร้อม rowIndex จริงสำหรับ update/delete)
-function bkList(p) {
-  bkGuard(p, false); // viewer ก็ดูได้
-
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('influencer');
-  if (!sheet) return bkJson({success:false, error:'ไม่พบชีท influencer'});
-
-  var cols = bkGetColumns();
-  var colIdx = bkColIndex();
-  var data = sheet.getDataRange().getValues();
-
-  // คอลัมน์ที่จะโชว์ในตาราง
-  var showCols = cols.filter(function(c){ return c.showTable && colIdx[c.key] !== undefined; });
-
-  var rows = [];
-  for (var i=1; i<data.length; i++) {
-    if (!data[i][1]) continue; // ข้ามแถวว่าง (ไม่มี line_id)
-    var row = { _rowIndex: i+1 };  // rowIndex จริงในชีท (1-based + header)
-    showCols.forEach(function(c){
-      row[c.key] = data[i][colIdx[c.key]];
-    });
-    // แนบ line_id เสมอ (ใช้ตอนส่งข้อความเฟสหลัง) + รูป
-    row._lineId = data[i][1];
-    row._photo  = data[i][3];
-    rows.push(row);
-  }
-
-  return bkJson({
-    success:true,
-    columns: showCols.map(function(c){ return {key:c.key, label:c.label, editable:c.editable, type:c.type, options:c.options}; }),
-    rows: rows
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { td.textContent = oldVal || '—'; }
   });
 }
 
-// ── UPDATE — แก้ค่าในแถว (เฉพาะคอลัมน์ที่ editable) ──
-// รับ: rowIndex, updates {key:value, ...}
-function bkUpdate(p) {
-  var auth = bkGuard(p, true); // admin เท่านั้น
-
-  var rowIndex = parseInt(p.rowIndex, 10);
-  if (!rowIndex || rowIndex < 2) return bkJson({success:false, error:'rowIndex ไม่ถูกต้อง'});
-
-  var updates = p.updates;
-  if (typeof updates === 'string') { try { updates = JSON.parse(updates); } catch(e){ updates = {}; } }
-  if (!updates || typeof updates !== 'object') return bkJson({success:false, error:'ไม่มีข้อมูลแก้ไข'});
-
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('influencer');
-  var cols = bkGetColumns();
-  var colIdx = bkColIndex();
-
-  // เช็คว่าคอลัมน์ที่จะแก้ editable จริง (กันแก้ข้ามสิทธิ์)
-  var editableKeys = {};
-  cols.forEach(function(c){ if (c.editable) editableKeys[c.key] = true; });
-
-  var changed = [];
-  for (var key in updates) {
-    if (!editableKeys[key]) continue;          // ไม่ editable → ข้าม
-    if (colIdx[key] === undefined) continue;
-    var col = colIdx[key] + 1;                 // 1-based
-    // รักษา 0 นำหน้า (เลขบัญชี/เบอร์) → set format เป็น text ก่อน
-    if (key === 'phone' || key === 'bank_account') {
-      sheet.getRange(rowIndex, col).setNumberFormat('@');
-    }
-    sheet.getRange(rowIndex, col).setValue(updates[key]);
-    changed.push(key);
+async function deleteRow(rowIndex) {
+  if (!confirm('ยืนยันลบรายการนี้? การลบไม่สามารถย้อนกลับได้')) return;
+  try {
+    const res = await gasPost({ action:'bk_delete', lineId: me.lineId, rowIndex });
+    if (!res.success) throw new Error(res.error || 'ลบไม่สำเร็จ');
+    TABLE_ROWS = TABLE_ROWS.filter(r => r._rowIndex !== rowIndex);
+    renderTable();
+  } catch (err) {
+    alert('ลบไม่สำเร็จ: ' + err.message);
   }
-
-  // audit log
-  bkAudit(auth.name, 'update', 'row '+rowIndex+': '+changed.join(','));
-
-  return bkJson({success:true, changed:changed});
 }
 
-// ── DELETE — ลบแถว ──
-function bkDelete(p) {
-  var auth = bkGuard(p, true); // admin เท่านั้น
-  var rowIndex = parseInt(p.rowIndex, 10);
-  if (!rowIndex || rowIndex < 2) return bkJson({success:false, error:'rowIndex ไม่ถูกต้อง'});
+// ══════════════════════ EDIT MODAL — การ์ดโปรไฟล์แก้ไขรวด ══════════════════════
+// ดึงทุกฟิลด์ผ่าน bk_getRow (ไม่ใช่แค่คอลัมน์ที่โชว์ในตาราง)
+let EDIT_ROW_INDEX = null;
+let EDIT_TARGET_LINEID = null;
+let EDIT_COLS = [];
 
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('influencer');
-  var lineId = sheet.getRange(rowIndex, 2).getValue();
-  sheet.deleteRow(rowIndex);
-
-  bkAudit(auth.name, 'delete', 'row '+rowIndex+' ('+lineId+')');
-  return bkJson({success:true});
-}
-
-// ── AUDIT LOG — ใครแก้อะไร (สำคัญเพราะเกี่ยวเงิน) ──
-function bkAudit(who, action, detail) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('bk_audit');
-  if (!sheet) {
-    sheet = ss.insertSheet('bk_audit');
-    sheet.getRange(1,1,1,4).setValues([['timestamp','who','action','detail']]);
-    sheet.getRange(1,1,1,4).setFontWeight('bold').setBackground('#374151').setFontColor('#FFFFFF');
-    sheet.setColumnWidth(1,160); sheet.setColumnWidth(4,300);
-  }
-  sheet.appendRow([bkNow(), who, action, detail]);
-}
-
-/***********************************************************************
- * เฟส 3-6 — โปรไฟล์เต็ม, สลิป, ส่งข้อความ, Ranking
- ***********************************************************************/
-
-// ── GET ROW — ดึงข้อมูลแถวเดียวครบทุกคอลัมน์ (สำหรับ modal แก้ไข) ──
-function bkGetRow(p) {
-  bkGuard(p, false);
-  var rowIndex = parseInt(p.rowIndex, 10);
-  if (!rowIndex || rowIndex < 2) return bkJson({success:false, error:'rowIndex ไม่ถูกต้อง'});
-
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('influencer');
-  var colIdx = bkColIndex();
-  var allCols = bkGetColumns(); // ทุกคอลัมน์ (ไม่กรอง showTable)
-  var rowData = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
-
-  var row = { _rowIndex: rowIndex, _lineId: rowData[1], _photo: rowData[3] };
-  allCols.forEach(function(c){
-    if (colIdx[c.key] !== undefined) row[c.key] = rowData[colIdx[c.key]];
-  });
-
-  return bkJson({
-    success:true,
-    row:row,
-    columns: allCols.map(function(c){ return {key:c.key, label:c.label, editable:c.editable, type:c.type, options:c.options}; })
-  });
-}
-
-// ── UPLOAD SLIP — อัพรูปสลิปเข้า Drive แล้วเซ็ต slip_url ของแถวนั้น ──
-function bkUploadSlip(p) {
-  var auth = bkGuard(p, true); // admin เท่านั้น
-  var rowIndex = parseInt(p.rowIndex, 10);
-  if (!rowIndex || rowIndex < 2) return bkJson({success:false, error:'rowIndex ไม่ถูกต้อง'});
-  if (!p.base64Data) return bkJson({success:false, error:'ไม่มีไฟล์'});
-
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('influencer');
-  var colIdx = bkColIndex();
-  var folderId = sheet.getRange(rowIndex, colIdx.folder_id+1).getValue();
+async function openEditModal(rowIndex) {
+  EDIT_ROW_INDEX = rowIndex;
+  el('pm-fields').innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">กำลังโหลด...</p>';
+  el('push-text').value = '';
+  el('edit-modal').classList.add('active');
 
   try {
-    var bytes = Utilities.base64Decode(p.base64Data);
-    var blob  = Utilities.newBlob(bytes, p.mimeType||'image/jpeg', p.fileName||'slip.jpg');
-    var folder = folderId ? DriveApp.getFolderById(folderId) : DriveApp.getRootFolder();
-    var file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    var url = 'https://lh3.googleusercontent.com/d/' + file.getId();
+    const res = await gasPost({ action:'bk_getRow', lineId: me.lineId, rowIndex });
+    if (!res.success) throw new Error(res.error || 'โหลดข้อมูลไม่สำเร็จ');
 
-    sheet.getRange(rowIndex, colIdx.slip_url+1).setValue(url);
-    bkAudit(auth.name, 'upload_slip', 'row '+rowIndex);
+    const row = res.row;
+    EDIT_COLS = res.columns;
+    EDIT_TARGET_LINEID = row._lineId;
 
-    return bkJson({success:true, url:url});
-  } catch(e) {
-    return bkJson({success:false, error:'อัพโหลดสลิปไม่สำเร็จ: '+e.message});
+    el('pm-avatar').src = row._photo || '';
+    el('pm-name').textContent = row.nickname || row.line_name || '—';
+
+    const editableFirst = [...EDIT_COLS].sort((a,b) => (b.editable - a.editable));
+    let html = '';
+    editableFirst.forEach(c => {
+      const val = row[c.key] ?? '';
+      if (c.type === 'select') {
+        let opts = `<option value="">-- เลือก --</option>`;
+        c.options.forEach(o => { opts += `<option value="${o}" ${val===o?'selected':''}>${o}</option>`; });
+        html += `<div class="pf-field"><label>${c.label}</label>
+          <select data-key="${c.key}" data-type="select" ${c.editable?'':'disabled'}>${opts}</select></div>`;
+      } else if (c.type === 'stars') {
+        const n = Number(val) || 0;
+        let stars = '';
+        for (let s=1; s<=5; s++) stars += `<span data-val="${s}" class="${s<=n?'filled':''}" onclick="pickStar(this,${s})">★</span>`;
+        html += `<div class="pf-field"><label>${c.label}</label>
+          <div class="star-picker" data-key="${c.key}" data-type="stars" data-value="${n}">${stars}</div></div>`;
+      } else if (c.type === 'image') {
+        const imgPreview = val ? `<img src="${val}"/>` : '';
+        html += `<div class="pf-field"><label>${c.label}</label>
+          <div class="slip-box" data-key="${c.key}" data-type="image" data-value="${val||''}">
+            ${imgPreview}
+            <label class="file-btn-sm">📎 อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
+          </div></div>`;
+      } else {
+        html += `<div class="pf-field"><label>${c.label}${c.editable?'':' 🔒'}</label>
+          <input type="text" data-key="${c.key}" data-type="text" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable?'':'disabled'}/></div>`;
+      }
+    });
+    el('pm-fields').innerHTML = html;
+  } catch (err) {
+    el('pm-fields').innerHTML = `<p style="text-align:center;color:#dc2626;font-size:13px;padding:20px">⚠️ ${err.message}</p>`;
   }
 }
 
-// ── PUSH MESSAGE — ส่งข้อความกลับหา influencer คนเดียว ──
-function bkPush(p) {
-  var auth = bkGuard(p, true); // admin เท่านั้น
-  var targetLineId = p.targetLineId;
-  var message = (p.message || '').trim();
-  if (!targetLineId) return bkJson({success:false, error:'ไม่พบ LINE ID ปลายทาง'});
-  if (!message) return bkJson({success:false, error:'กรุณากรอกข้อความ'});
+function pickStar(span, val) {
+  const picker = span.parentElement;
+  picker.dataset.value = val;
+  [...picker.children].forEach(s => s.classList.toggle('filled', Number(s.dataset.val) <= val));
+}
 
-  var cfg = getConfigMap(); // ใช้ฟังก์ชันร่วมจาก Code.gs (อยู่โปรเจคเดียวกัน)
-  var token = cfg['line_channel_token'];
-  if (!token) return bkJson({success:false, error:'ไม่พบ line_channel_token ใน config'});
-
-  try {
-    var res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', {
-      method:'post',
-      contentType:'application/json',
-      headers:{ Authorization:'Bearer '+token },
-      payload: JSON.stringify({
-        to: targetLineId,
-        messages: [{ type:'text', text: message }]
-      }),
-      muteHttpExceptions:true
-    });
-    if (res.getResponseCode() >= 300) {
-      return bkJson({success:false, error:'LINE push fail: '+res.getResponseCode()+' '+res.getContentText().slice(0,150)});
+async function uploadSlipFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const box = input.closest('.slip-box');
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = reader.result.split(',')[1];
+    try {
+      const res = await gasPost({
+        action:'bk_uploadSlip', lineId: me.lineId, rowIndex: EDIT_ROW_INDEX,
+        base64Data: base64, fileName: file.name, mimeType: file.type
+      });
+      if (!res.success) throw new Error(res.error || 'อัพโหลดไม่สำเร็จ');
+      box.dataset.value = res.url;
+      let img = box.querySelector('img');
+      if (!img) { img = document.createElement('img'); box.insertBefore(img, box.firstChild); }
+      img.src = res.url;
+    } catch (err) {
+      alert('อัพโหลดสลิปไม่สำเร็จ: ' + err.message);
     }
-    bkAudit(auth.name, 'push_message', 'to '+targetLineId+': '+message.slice(0,60));
-    return bkJson({success:true});
-  } catch(e) {
-    return bkJson({success:false, error:e.message});
-  }
+  };
+  reader.readAsDataURL(file);
 }
 
-// ── RANKING — คืนรายชื่อเรียงตามคะแนน (rating) มากไปน้อย ──
-function bkRanking(p) {
-  bkGuard(p, false);
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('influencer');
-  if (!sheet) return bkJson({success:false, error:'ไม่พบชีท influencer'});
+function closeEditModal() {
+  el('edit-modal').classList.remove('active');
+  EDIT_ROW_INDEX = null;
+  EDIT_TARGET_LINEID = null;
+}
 
-  var colIdx = bkColIndex();
-  var data = sheet.getDataRange().getValues();
-  var list = [];
-  for (var i=1; i<data.length; i++) {
-    if (!data[i][1]) continue;
-    list.push({
-      rowIndex: i+1,
-      nickname: data[i][colIdx.nickname],
-      tiktok: data[i][colIdx.tiktok],
-      photo: data[i][colIdx.line_photo],
-      profileUrl: data[i][colIdx.line_profile_drive_url],
-      rating: Number(data[i][colIdx.rating]) || 0,
-      status: data[i][colIdx.status] || '',
-      amount: data[i][colIdx.amount] || ''
+async function saveEditModal() {
+  if (!EDIT_ROW_INDEX) return;
+  const updates = {};
+
+  el('pm-fields').querySelectorAll('[data-key]').forEach(node => {
+    const key = node.dataset.key;
+    const type = node.dataset.type;
+    if (type === 'select') { if (!node.disabled) updates[key] = node.value; }
+    else if (type === 'stars') { updates[key] = node.dataset.value || '0'; }
+    else if (type === 'image') { updates[key] = node.dataset.value || ''; }
+    else { if (!node.disabled) updates[key] = node.value; }
+  });
+
+  const btn = el('pm-save-btn');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  try {
+    const res = await gasPost({
+      action:'bk_update', lineId: me.lineId,
+      rowIndex: EDIT_ROW_INDEX, updates: JSON.stringify(updates)
     });
+    if (!res.success) throw new Error(res.error || 'บันทึกไม่สำเร็จ');
+
+    const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
+    if (row) Object.assign(row, updates);
+    renderTable();
+    closeEditModal();
+  } catch (err) {
+    alert('บันทึกไม่สำเร็จ: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 บันทึก';
   }
-  list.sort(function(a,b){ return b.rating - a.rating; });
-  return bkJson({success:true, list:list});
 }
+
+// ── ส่งข้อความถึง influencer (เฟส 5) ──
+async function sendPushMessage() {
+  const msg = el('push-text').value.trim();
+  if (!msg) { alert('กรุณากรอกข้อความ'); return; }
+  if (!EDIT_TARGET_LINEID) { alert('ไม่พบ LINE ID ปลายทาง'); return; }
+
+  const btn = el('push-btn');
+  btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+  try {
+    const res = await gasPost({
+      action:'bk_push', lineId: me.lineId,
+      targetLineId: EDIT_TARGET_LINEID, message: msg
+    });
+    if (!res.success) throw new Error(res.error || 'ส่งไม่สำเร็จ');
+    el('push-text').value = '';
+    btn.textContent = '✅ ส่งแล้ว';
+    setTimeout(() => { btn.textContent = '📤 ส่งข้อความ'; }, 1500);
+  } catch (err) {
+    alert('ส่งข้อความไม่สำเร็จ: ' + err.message);
+    btn.textContent = '📤 ส่งข้อความ';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ══════════════════════ VIEW SWITCH + RANKING (เฟส 6) ══════════════════════
+let RANK_LOADED = false;
+
+function switchView(view) {
+  el('tab-table').classList.toggle('active', view === 'table');
+  el('tab-rank').classList.toggle('active', view === 'rank');
+  el('view-table').style.display = view === 'table' ? 'block' : 'none';
+  el('view-rank').style.display  = view === 'rank'  ? 'block' : 'none';
+  if (view === 'rank' && !RANK_LOADED) loadRanking();
+}
+
+async function loadRanking() {
+  try {
+    const res = await gasPost({ action:'bk_ranking', lineId: me.lineId });
+    if (!res.success) throw new Error(res.error || 'โหลด ranking ไม่สำเร็จ');
+    RANK_LOADED = true;
+    renderRanking(res.list);
+  } catch (err) {
+    el('rank-grid').innerHTML = `<div class="placeholder">⚠️ ${err.message}</div>`;
+  }
+}
+
+function renderRanking(list) {
+  if (!list.length) {
+    el('rank-grid').innerHTML = `<div class="placeholder">ยังไม่มีข้อมูล</div>`;
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  let html = '';
+  list.forEach((r, i) => {
+    const stars = r.rating > 0 ? '⭐'.repeat(r.rating) : '<span style="color:#d1d5db">ยังไม่ให้คะแนน</span>';
+    html += `<div class="rank-card" onclick="openEditModal(${r.rowIndex})" style="cursor:pointer">
+      ${i < 3 ? `<span class="medal">${medals[i]}</span>` : ''}
+      <img src="${r.photo || ''}" alt=""/>
+      <div class="rname">${escapeHtml(r.nickname || '—')}</div>
+      <div class="rtiktok">@${escapeHtml(r.tiktok || '')}</div>
+      <div class="rstars">${stars}</div>
+      ${r.status ? `<div class="rstatus">${escapeHtml(r.status)}</div>` : ''}
+    </div>`;
+  });
+  el('rank-grid').innerHTML = html;
+}
+</script>
+</body>
+</html>
