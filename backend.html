@@ -24,7 +24,7 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 
 /* ── หน้า dashboard (เฟสต่อไปจะเติม) ── */
 #dashboard{display:none;max-width:960px;margin:0 auto;padding:16px}
-.topbar{background:#fff;border-radius:10px;padding:10px 15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.topbar{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .topbar .brand{font-size:18px;font-weight:700;color:#16a34a}
 .topbar .user{display:flex;align-items:center;gap:10px;font-size:13px;color:#444}
 .topbar .user img{width:34px;height:34px;border-radius:50%;object-fit:cover}
@@ -61,26 +61,31 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 /* ── edit modal (การ์ดโปรไฟล์แก้ไขรวด) ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto}
 .modal-overlay.active{display:flex}
-.profile-modal{background:#fff;border-radius:14px;max-width:380px;width:100%;margin-top:30px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2)}
-.profile-modal-head{background:#f0fdf4;padding:20px;text-align:center;position:relative}
-.profile-modal-head .avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.1);background:#e5e7eb}
-.profile-modal-head .pname{margin-top:10px;font-weight:700;font-size:17px;color:#15803d}
-.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:20px;color:#888;cursor:pointer;line-height:1}
-.profile-modal-body{padding:18px 20px;max-height:60vh;overflow-y:auto}
+.profile-modal{background:#fff;border-radius:20px;max-width:380px;width:100%;margin-top:24px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.profile-modal-head{background:#fff;padding:24px 20px 18px;text-align:center;position:relative;border-bottom:1px solid #f3f4f6}
+.profile-modal-head .avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 0 0 3px #dcfce7, 0 4px 14px rgba(0,0,0,.12);background:#e5e7eb}
+.profile-modal-head .pname{margin-top:12px;font-weight:800;font-size:18px;color:#111}
+.modal-close{position:absolute;top:14px;right:16px;background:#f4f4f5;border:none;width:28px;height:28px;border-radius:50%;font-size:15px;color:#777;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:#e5e7eb}
+.profile-modal-body{padding:18px 20px;max-height:55vh;overflow-y:auto}
 .pf-field{margin-bottom:14px}
-.pf-field label{display:block;font-size:12px;font-weight:600;color:#666;margin-bottom:5px}
-.pf-field input{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:9px 11px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
+.pf-field label{display:block;font-size:11.5px;font-weight:700;color:#9ca3af;margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.pf-field input{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:10px 12px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
 .pf-field input:focus{border-color:#16a34a;background:#fff}
-.pf-field input:disabled{background:#f1f5f9;color:#9ca3af;cursor:not-allowed}
-.profile-modal-foot{padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:10px}
-.btn-modal{flex:1;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;padding:11px;border:none;border-radius:5px;cursor:pointer}
-.btn-modal.save{background:#16a34a;color:#fff}
+.pf-field input:disabled{background:#f8fafc;color:#9ca3af;cursor:not-allowed}
+.profile-modal-foot{padding:14px 20px 18px;display:flex;gap:10px}
+.btn-modal{flex:1;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;padding:12px;border:none;border-radius:12px;cursor:pointer}
+.btn-modal.save{background:#16a34a;color:#fff;box-shadow:0 4px 12px rgba(22,163,74,.3)}
 .btn-modal.save:hover{background:#15803d}
-.btn-modal.save:disabled{background:#86efac;cursor:not-allowed}
-.btn-modal.cancel{background:#f4f4f5;color:#444}
+.btn-modal.save:disabled{background:#86efac;cursor:not-allowed;box-shadow:none}
+.btn-modal.cancel{background:#f4f4f5;color:#555}
+.btn-modal.cancel:hover{background:#e5e7eb}
+
+/* ── status badge ในการ์ดโปรไฟล์ (ทางลัดเห็นสถานะทันที) ── */
+.pm-status-badge{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;padding:4px 12px;border-radius:99px}
 
 /* ── view tabs ── */
-.view-tabs{display:flex;gap:8px;margin-bottom:14px}
+.view-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .view-tab{font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;background:#fff;color:#666;box-shadow:0 1px 6px rgba(0,0,0,.07)}
 .view-tab.active{background:#16a34a;color:#fff}
 
@@ -94,56 +99,67 @@ td input{width:100%;font-family:'Sarabun',sans-serif;border:1.5px solid #16a34a;
 .rank-card .rstars{font-size:15px;color:#fbbf24;letter-spacing:1px}
 .rank-card .rstatus{margin-top:8px;display:inline-block;font-size:11px;font-weight:600;padding:2px 10px;border-radius:99px;background:#f0fdf4;color:#15803d}
 
-/* ── star picker (ใน modal) ── */
-.star-picker{display:flex;gap:4px;font-size:24px}
-.star-picker span{cursor:pointer;color:#e5e7eb}
-.star-picker span.filled{color:#fbbf24}
-
-/* ── select in modal ── */
-.pf-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:9px 11px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
-.pf-field select:focus{border-color:#16a34a;background:#fff}
-
-/* ── slip upload ── */
-.slip-box{display:flex;align-items:center;gap:10px}
-.slip-box img{width:60px;height:60px;border-radius:6px;object-fit:cover;border:1px solid #e5e7eb}
-.slip-box .file-btn-sm{font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px dashed #86efac;border-radius:5px;padding:7px 12px;color:#16a34a;cursor:pointer;background:transparent}
-
-/* ── push message section in modal ── */
-.push-box{background:#f0fdf4;border-radius:8px;padding:12px;margin-top:6px}
-.push-box textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:5px;padding:8px 10px;font-size:13px;font-family:'Sarabun',sans-serif;outline:none;resize:vertical;min-height:60px;background:#fff}
-.push-box textarea:focus{border-color:#16a34a}
-.btn-push{margin-top:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border:none;border-radius:5px;cursor:pointer;background:#16a34a;color:#fff}
-.btn-push:disabled{background:#86efac;cursor:not-allowed}
-
-/* ── inline icon links in table cells ── */
-.cell-icon{margin-left:6px;text-decoration:none;cursor:pointer;opacity:.75;font-size:13px}
-.cell-icon:hover{opacity:1}
-.line-link{color:#16a34a;font-weight:600;cursor:pointer;white-space:nowrap}
-.line-link:hover{text-decoration:underline}
-
 /* ── rating slider ── */
 .rating-slider-wrap{text-align:center}
 .rating-value{font-size:28px;font-weight:700;color:#fbbf24;margin-bottom:6px}
 .rating-value .star{font-size:20px}
 input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 
-/* ── quick action buttons (โฟลเดอร์ + ลิงก์) แบบ Flex ── */
-.quick-actions{padding:0 20px 14px}
-.quick-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-.quick-btn{display:block;text-align:center;background:#f5f5f5;color:#444;border-radius:6px;padding:9px 6px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #e5e7eb}
-.quick-btn:hover{background:#eee}
-.quick-link-btn{display:block;text-align:center;background:#f0fdf4;color:#15803d;border-radius:6px;padding:9px 6px;font-size:12px;font-weight:600;text-decoration:none;border:1px solid #bbf7d0;margin-bottom:8px}
+/* ── select in modal ── */
+.pf-field select{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:10px 12px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#fafafa}
+.pf-field select:focus{border-color:#16a34a;background:#fff}
+
+/* ── slip upload ── */
+.slip-box{display:flex;align-items:center;gap:10px}
+.slip-box img{width:60px;height:60px;border-radius:9px;object-fit:cover;border:1px solid #e5e7eb;cursor:pointer}
+.slip-box .file-btn-sm{font-family:'Sarabun',sans-serif;font-size:12px;border:1.5px dashed #86efac;border-radius:9px;padding:7px 12px;color:#16a34a;cursor:pointer;background:transparent}
+
+/* ── push message section in modal ── */
+.push-box{background:#f0fdf4;border-radius:12px;padding:14px;margin-top:6px}
+.push-box textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:9px 11px;font-size:13px;font-family:'Sarabun',sans-serif;outline:none;resize:vertical;min-height:60px;background:#fff}
+.push-box textarea:focus{border-color:#16a34a}
+.btn-push{margin-top:8px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;padding:9px 14px;border:none;border-radius:9px;cursor:pointer;background:#16a34a;color:#fff}
+.btn-push:disabled{background:#86efac;cursor:not-allowed}
+
+/* ── inline icon links in table cells (ติดกับตัวอักษร ไม่เว้นวรรค) ── */
+.cell-icon{margin-right:0;text-decoration:none;cursor:pointer;opacity:.8;font-size:13px}
+.cell-icon:hover{opacity:1}
+.line-link{color:#16a34a;font-weight:600;cursor:pointer;white-space:nowrap}
+.line-link:hover{text-decoration:underline}
+
+/* ── quick actions — ไอคอนวงกลมแบบแอป (โมเดิร์น) ── */
+.quick-actions{padding:16px 20px 4px}
+.action-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px}
+.action-icon{display:flex;flex-direction:column;align-items:center;gap:5px;text-decoration:none;cursor:pointer;background:none;border:none;font-family:'Sarabun',sans-serif;padding:0}
+.action-icon .circle{width:48px;height:48px;border-radius:50%;background:#f4f4f5;display:flex;align-items:center;justify-content:center;font-size:19px;transition:transform .15s ease, background .15s ease}
+.action-icon:hover .circle{transform:translateY(-2px);background:#ececec}
+.action-icon .cap{font-size:10px;color:#666;font-weight:600;text-align:center;line-height:1.2;max-width:60px}
+.action-icon.green .circle{background:#dcfce7;color:#15803d}
+.action-icon.green:hover .circle{background:#bbf7d0}
+.action-icon.blue .circle{background:#dbeafe;color:#1e40af}
+.action-icon.blue:hover .circle{background:#bfdbfe}
+
+/* ── quick-link-btn — ยังใช้ใน LINE modal (ปุ่มเปิดลิงก์แชร์) ── */
+.quick-link-btn{display:block;text-align:center;background:#f0fdf4;color:#15803d;border-radius:9px;padding:10px 6px;font-size:13px;font-weight:700;text-decoration:none;border:1px solid #bbf7d0}
 .quick-link-btn:hover{background:#dcfce7}
 
 /* ── days-since badge ── */
 .days-badge{display:inline-block;margin-top:6px;font-size:11px;font-weight:600;color:#6b7280;background:#f3f4f6;border-radius:99px;padding:3px 10px}
 
-/* ── finance tab ── */
-.status-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px}
-.status-card{background:#fff;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:14px;text-align:center;cursor:pointer;border:2px solid transparent}
-.status-card.active{border-color:#16a34a}
-.status-card .num{font-size:24px;font-weight:700}
-.status-card .lbl{font-size:11px;color:#888;margin-top:2px}
+/* ── finance tab — status cards โมเดิร์น (ขอบสี + hover lift) ── */
+.status-overview{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin-bottom:18px}
+.status-card{
+  background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,.06);
+  padding:16px 18px;cursor:pointer;border:1.5px solid #f1f5f9;
+  display:flex;align-items:center;gap:12px;
+  border-left:4px solid transparent;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.status-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1)}
+.status-card.active{box-shadow:0 6px 16px rgba(0,0,0,.12)}
+.status-card .icon{font-size:22px;flex-shrink:0}
+.status-card .num{font-size:26px;font-weight:800;line-height:1}
+.status-card .lbl{font-size:11.5px;color:#6b7280;margin-top:3px;font-weight:600}
 
 /* ── compact ranking grid ── */
 .rank-grid.compact{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
@@ -284,6 +300,7 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
       <button class="modal-close" onclick="closeEditModal()">✕</button>
       <img class="avatar" id="pm-avatar" src="" alt=""/>
       <div class="pname" id="pm-name"></div>
+      <div id="pm-status" style="display:none"></div>
       <div class="days-badge" id="pm-days" style="display:none"></div>
     </div>
     <div class="quick-actions" id="pm-quick"></div>
@@ -504,27 +521,27 @@ function renderCellValue(c, val, row) {
     const safe = escapeHtml(String(val || '—'));
     return `${safe} <span class="line-link" onclick="event.stopPropagation(); openLineModal(${row._rowIndex})">💬</span>`;
   }
-  // เบอร์โทร — ไอคอนโทร (เฉพาะถ้าเป็นเบอร์จริง)
+  // เบอร์โทร — ไอคอนโทรอยู่หน้า ติดกับเลข (เฉพาะถ้าเป็นเบอร์จริง)
   if (c.key === 'phone' && val) {
     const phoneStr = String(val).trim();
     const isPhone = /^[0-9+\-\s()]{6,}$/.test(phoneStr);
     const safe = escapeHtml(phoneStr);
     if (isPhone) {
       const tel = phoneStr.replace(/[\s()\-]/g,'');
-      return `${safe} <a class="cell-icon" href="tel:${tel}" onclick="event.stopPropagation()">📞</a>`;
+      return `<a class="cell-icon" href="tel:${tel}" onclick="event.stopPropagation()">📞</a>${safe}`;
     }
     return safe;
   }
-  // TikTok — ไอคอนเปิดโปรไฟล์
+  // TikTok — ไอคอนอยู่หน้า ติดกับชื่อ
   if (c.key === 'tiktok' && val) {
     const uname = String(val).replace(/^@/,'');
     const safe = escapeHtml(String(val));
-    return `${safe} <a class="cell-icon" href="https://www.tiktok.com/@${uname}" target="_blank" onclick="event.stopPropagation()">🎵</a>`;
+    return `<a class="cell-icon" href="https://www.tiktok.com/@${uname}" target="_blank" onclick="event.stopPropagation()">🎵</a>${safe}`;
   }
-  // เจนโค้ด / เลขบัญชี — ไอคอน copy
+  // เจนโค้ด / เลขบัญชี — ไอคอน copy อยู่หน้า
   if ((c.key === 'gen_code' || c.key === 'bank_account') && val) {
     const safe = escapeHtml(String(val));
-    return `${safe} <span class="cell-icon" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" style="cursor:pointer">📋</span>`;
+    return `<span class="cell-icon" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" style="cursor:pointer">📋</span>${safe}`;
   }
   return escapeHtml(String(val ?? '') || '—');
 }
@@ -632,6 +649,7 @@ async function deleteRow(rowIndex) {
 // ดึงทุกฟิลด์ผ่าน bk_getRow (ไม่ใช่แค่คอลัมน์ที่โชว์ในตาราง)
 let EDIT_ROW_INDEX = null;
 let EDIT_TARGET_LINEID = null;
+let CURRENT_MODAL_ROW = null; // เก็บ row เต็มล่าสุดที่โหลดใน modal (ใช้ส่งต่อให้ปุ่มส่งข้อความ)
 let EDIT_COLS = [];
 
 async function openEditModal(rowIndex, mode) {
@@ -640,6 +658,7 @@ async function openEditModal(rowIndex, mode) {
   el('pm-fields').innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:13px;padding:20px">กำลังโหลด...</p>';
   el('pm-quick').innerHTML = '';
   el('pm-days').style.display = 'none';
+  el('pm-status').style.display = 'none';
   el('edit-modal').classList.add('active');
 
   try {
@@ -649,6 +668,7 @@ async function openEditModal(rowIndex, mode) {
     const row = res.row;
     EDIT_COLS = res.columns;
     EDIT_TARGET_LINEID = row._lineId;
+    CURRENT_MODAL_ROW = row; // เก็บไว้ให้ปุ่มส่งข้อความใช้ต่อ
 
     el('pm-avatar').src = row._photo || row.line_profile_drive_url || '';
 
@@ -661,6 +681,18 @@ async function openEditModal(rowIndex, mode) {
       el('pm-name').textContent = nameText;
     }
 
+    // สถานะปัจจุบัน — ทางลัดเห็นทันทีในการ์ด (ถ้าจ่ายแล้วต่อท้ายด้วยวันที่จ่าย)
+    if (row.status) {
+      const sc = STATUS_COLORS[row.status] || { bg:'#f1f5f9', fg:'#475569' };
+      let statusText = row.status;
+      if (row.status === 'จ่ายเงินแล้ว' && row.paid_date) {
+        statusText += ' • ' + formatTsCompact(row.paid_date);
+      }
+      const badge = el('pm-status');
+      badge.innerHTML = `<span class="pm-status-badge" style="background:${sc.bg};color:${sc.fg}">${escapeHtml(statusText)}</span>`;
+      badge.style.display = 'block';
+    }
+
     // วันที่ร่วมงานมาแล้วกี่วัน (จาก timestamp ถึงวันนี้)
     if (row.timestamp) {
       const days = daysSince(row.timestamp);
@@ -670,37 +702,34 @@ async function openEditModal(rowIndex, mode) {
       }
     }
 
-    // ปุ่ม quick-action แบบ Flex — 4 โฟลเดอร์ + 2 ลิงก์ + แชร์ LINE + โทร (ถ้ามีค่า)
-    let quickHtml = '';
-    const folders = [
-      ['📁 Main',    row.folder_id],
-      ['🎬 Master',  row.folder_final_id],
-      ['🎥 Footage', row.folder_footage_id],
-      ['📊 Stat',    row.folder_stat_id]
-    ].filter(f => f[1]);
-    if (folders.length) {
-      quickHtml += '<div class="quick-row">';
-      folders.forEach(f => {
-        quickHtml += `<a class="quick-btn" href="https://drive.google.com/drive/folders/${f[1]}" target="_blank">${f[0]}</a>`;
-      });
-      quickHtml += '</div>';
-    }
-    if (row.post_link_1_platform && row.post_link_1_url) {
-      quickHtml += `<a class="quick-link-btn" href="${row.post_link_1_url}" target="_blank">🔗 ${escapeHtml(row.post_link_1_platform)}</a>`;
-    }
-    if (row.post_link_2_platform && row.post_link_2_url) {
-      quickHtml += `<a class="quick-link-btn" href="${row.post_link_2_url}" target="_blank">🔗 ${escapeHtml(row.post_link_2_platform)}</a>`;
-    }
-    if (row.share_url) {
-      quickHtml += `<a class="quick-link-btn" href="${row.share_url}" target="_blank">📤 ลิงก์แชร์ (LINE)</a>`;
-    }
+    // ปุ่ม quick-action แบบไอคอนวงกลม — โฟลเดอร์ 4, ลิงก์โพสต์ 2, แชร์, โทร, ส่งข้อความ
+    let icons = [];
+    if (row.folder_id)        icons.push({icon:'📁', cap:'Main',    href:'https://drive.google.com/drive/folders/'+row.folder_id, cls:''});
+    if (row.folder_final_id)  icons.push({icon:'🎬', cap:'Master',  href:'https://drive.google.com/drive/folders/'+row.folder_final_id, cls:''});
+    if (row.folder_footage_id)icons.push({icon:'🎥', cap:'Footage', href:'https://drive.google.com/drive/folders/'+row.folder_footage_id, cls:''});
+    if (row.folder_stat_id)   icons.push({icon:'📊', cap:'Stat',    href:'https://drive.google.com/drive/folders/'+row.folder_stat_id, cls:''});
+    if (row.post_link_1_platform && row.post_link_1_url)
+      icons.push({icon:'🔗', cap:escapeHtml(row.post_link_1_platform), href:row.post_link_1_url, cls:'green'});
+    if (row.post_link_2_platform && row.post_link_2_url)
+      icons.push({icon:'🔗', cap:escapeHtml(row.post_link_2_platform), href:row.post_link_2_url, cls:'green'});
+    if (row.share_url)
+      icons.push({icon:'📤', cap:'แชร์', href:row.share_url, cls:'green'});
     if (row.phone) {
       const phoneStr = String(row.phone).trim();
       if (/^[0-9+\-\s()]{6,}$/.test(phoneStr)) {
-        const tel = phoneStr.replace(/[\s()\-]/g,'');
-        quickHtml += `<a class="quick-link-btn" href="tel:${tel}">📞 โทร ${escapeHtml(phoneStr)}</a>`;
+        icons.push({icon:'📞', cap:'โทร', href:'tel:'+phoneStr.replace(/[\s()\-]/g,''), cls:'blue'});
       }
     }
+
+    let quickHtml = '<div class="action-grid">';
+    icons.forEach(o => {
+      quickHtml += `<a class="action-icon ${o.cls}" href="${o.href}" target="_blank">
+        <span class="circle">${o.icon}</span><span class="cap">${o.cap}</span></a>`;
+    });
+    // ปุ่มส่งข้อความ — เปิด LINE modal โดยใช้ row ที่โหลดไว้แล้ว (ใช้ได้ทุก context: ตาราง/การเงิน/ranking/ฐานข้อมูล)
+    quickHtml += `<button type="button" class="action-icon blue" onclick="openLineModal(${rowIndex}, CURRENT_MODAL_ROW)">
+      <span class="circle">💬</span><span class="cap">ข้อความ</span></button>`;
+    quickHtml += '</div>';
     el('pm-quick').innerHTML = quickHtml;
 
     // กรองฟิลด์ตาม mode — full=ครบทุกฟิลด์, finance=เฉพาะการเงิน, ranking=เฉพาะคะแนน
@@ -862,15 +891,16 @@ async function saveEditModal() {
 // ══════════════════════ LINE MODAL — แชร์ + ส่งข้อความ (แยกจาก edit modal) ══════════════════════
 let LINE_TARGET_LINEID = null;
 
-function openLineModal(rowIndex) {
-  const row = TABLE_ROWS.find(r => r._rowIndex === rowIndex) || FIN_ROWS.find(r => r.rowIndex === rowIndex);
+function openLineModal(rowIndex, rowData) {
+  const row = rowData || TABLE_ROWS.find(r => r._rowIndex === rowIndex) || FIN_ROWS.find(r => r.rowIndex === rowIndex);
   if (!row) return;
   LINE_TARGET_LINEID = row._lineId || row.lineId;
 
-  el('lm-avatar').src = row._photo || row.photo || '';
+  el('lm-avatar').src = row._photo || row.photo || row.line_profile_drive_url || '';
   el('lm-name').textContent = row.nickname || row.line_name || row.lineName || '—';
   const shareBtn = el('lm-share-btn');
-  const shareUrl = row._shareUrl || row.shareUrl;
+  // รองรับทั้ง _shareUrl (จาก bk_list) และ share_url (จาก bk_getRow)
+  const shareUrl = row._shareUrl || row.shareUrl || row.share_url;
   if (shareUrl) {
     shareBtn.href = shareUrl;
     shareBtn.style.display = '';
@@ -982,15 +1012,24 @@ async function loadFinance() {
 }
 
 function renderStatusOverview(counts) {
-  const order = ['รอตรวจสอบ','อนุมัติแล้ว','เข้าคิวจ่าย','จ่ายเงินแล้ว','ตีกลับ'];
+  const order = [
+    { s:'รอตรวจสอบ',   icon:'⏳' },
+    { s:'อนุมัติแล้ว',  icon:'✅' },
+    { s:'เข้าคิวจ่าย',  icon:'🕓' },
+    { s:'จ่ายเงินแล้ว', icon:'💸' },
+    { s:'ตีกลับ',       icon:'↩️' }
+  ];
   let html = '';
-  order.forEach(s => {
-    const n = counts[s] || 0;
-    const c = STATUS_COLORS[s] || { bg:'#f1f5f9', fg:'#475569' };
-    const active = FIN_STATUS_FILTER === s ? 'active' : '';
-    html += `<div class="status-card ${active}" style="background:${c.bg}" onclick="filterFinanceStatus('${s}')">
-      <div class="num" style="color:${c.fg}">${n}</div>
-      <div class="lbl" style="color:${c.fg}">${s}</div>
+  order.forEach(o => {
+    const n = counts[o.s] || 0;
+    const c = STATUS_COLORS[o.s] || { bg:'#f1f5f9', fg:'#475569' };
+    const active = FIN_STATUS_FILTER === o.s ? 'active' : '';
+    html += `<div class="status-card ${active}" style="border-left-color:${c.fg}" onclick="filterFinanceStatus('${o.s}')">
+      <div class="icon">${o.icon}</div>
+      <div>
+        <div class="num" style="color:${c.fg}">${n}</div>
+        <div class="lbl">${o.s}</div>
+      </div>
     </div>`;
   });
   el('status-overview').innerHTML = html;
