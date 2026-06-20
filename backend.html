@@ -7,6 +7,7 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -38,6 +39,9 @@ body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:1
 .toolbar input,.toolbar select{font-family:'Sarabun',sans-serif;border:1.5px solid #e5e7eb;border-radius:5px;padding:8px 12px;font-size:13px;outline:none;background:#fafafa}
 .toolbar input:focus,.toolbar select:focus{border-color:#16a34a;background:#fff}
 .toolbar input{flex:1;min-width:160px}
+.search-wrap{flex:1;min-width:160px;position:relative;display:flex;align-items:center}
+.search-wrap .search-ic{position:absolute;left:12px;color:#9ca3af;font-size:13px;pointer-events:none}
+.search-wrap input{width:100%;padding-left:34px!important}
 #filter-status{display:none}
 .toolbar .count{font-size:12px;color:#888;white-space:nowrap}
 
@@ -186,6 +190,8 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 /* ── row thumbnail (รูปโปรไฟล์หน้าแถว — ไม่กระทบความสูงแถว) ── */
 .row-thumb{width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;display:block;background:#e5e7eb;flex-shrink:0}
 .thumb-cell{padding:5px 8px!important;width:36px}
+.doc-thumbs{display:flex;gap:4px}
+td:has(.doc-thumbs){max-width:none;overflow:visible}
 
 /* ── lightbox (ขยายรูป) ── */
 .lightbox-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out}
@@ -215,6 +221,7 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 .directory-card img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:#e5e7eb;margin-bottom:8px}
 .directory-card .dname{font-weight:700;font-size:13px;color:#1F1F1F}
 .directory-card .dtiktok{font-size:11px;color:#888}
+.directory-card .ddate{font-size:10px;color:#9ca3af;margin-top:6px}
 </style>
 </head>
 <body>
@@ -243,15 +250,15 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
   </div>
 
   <div class="view-tabs">
-    <button class="view-tab active" id="tab-table" onclick="switchView('table')"><span class="tab-icon">📋</span><span>ตารางงาน</span></button>
-    <button class="view-tab" id="tab-rank" onclick="switchView('rank')"><span class="tab-icon">🏆</span><span>Ranking</span></button>
-    <button class="view-tab" id="tab-finance" onclick="switchView('finance')"><span class="tab-icon">💰</span><span>การเงิน</span></button>
-    <button class="view-tab" id="tab-directory" onclick="switchView('directory')"><span class="tab-icon">👥</span><span>ฐานข้อมูล</span></button>
+    <button class="view-tab active" id="tab-table" onclick="switchView('table')"><span class="tab-icon"><i class="fa-solid fa-table-list"></i></span><span>ตารางงาน</span></button>
+    <button class="view-tab" id="tab-rank" onclick="switchView('rank')"><span class="tab-icon"><i class="fa-solid fa-trophy"></i></span><span>Ranking</span></button>
+    <button class="view-tab" id="tab-finance" onclick="switchView('finance')"><span class="tab-icon"><i class="fa-solid fa-sack-dollar"></i></span><span>การเงิน</span></button>
+    <button class="view-tab" id="tab-directory" onclick="switchView('directory')"><span class="tab-icon"><i class="fa-solid fa-users"></i></span><span>ฐานข้อมูล</span></button>
   </div>
 
   <div id="view-table">
     <div class="toolbar">
-      <input id="search-box" type="text" placeholder="🔍 ค้นหา ชื่อเล่น / TikTok / เบอร์..." oninput="renderTable()"/>
+      <div class="search-wrap"><i class="fa-solid fa-magnifying-glass search-ic"></i><input id="search-box" type="text" placeholder="ค้นหา ชื่อเล่น / TikTok / เบอร์..." oninput="renderTable()"/></div>
       <select id="filter-status" onchange="renderTable()">
         <option value="">ทุกสถานะ</option>
       </select>
@@ -276,17 +283,17 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
   <div id="view-finance" style="display:none">
     <div class="status-overview" id="status-overview"></div>
     <div class="toolbar">
-      <input id="finance-search" type="text" placeholder="🔍 ค้นหาชื่อ..." oninput="renderFinance()"/>
+      <div class="search-wrap"><i class="fa-solid fa-magnifying-glass search-ic"></i><input id="finance-search" type="text" placeholder="ค้นหาชื่อ..." oninput="renderFinance()"/></div>
       <span class="count" id="finance-count"></span>
     </div>
     <div class="table-wrap">
       <div class="table-scroll">
         <table>
           <thead><tr>
-            <th></th><th>สถานะ</th><th></th><th>ชื่อเล่น</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>ชื่อบัญชี</th>
+            <th></th><th>สถานะ</th><th></th><th>ชื่อเล่น</th><th>เอกสาร</th><th>ธนาคาร</th><th>เลขบัญชี</th><th>ชื่อบัญชี</th>
             <th>จำนวนเงิน</th><th>สลิป</th><th>วันที่จ่าย</th><th>โน้ต</th>
           </tr></thead>
-          <tbody id="finance-rows"><tr class="loading-row"><td colspan="11">กำลังโหลดข้อมูล…</td></tr></tbody>
+          <tbody id="finance-rows"><tr class="loading-row"><td colspan="12">กำลังโหลดข้อมูล…</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -294,7 +301,7 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 
   <div id="view-directory" style="display:none">
     <div class="toolbar">
-      <input id="directory-search" type="text" placeholder="🔍 ค้นหาชื่อเล่น / TikTok..." oninput="renderDirectory()"/>
+      <div class="search-wrap"><i class="fa-solid fa-magnifying-glass search-ic"></i><input id="directory-search" type="text" placeholder="ค้นหาชื่อเล่น / TikTok..." oninput="renderDirectory()"/></div>
       <span class="count" id="directory-count"></span>
     </div>
     <div class="directory-grid" id="directory-grid">
@@ -308,7 +315,7 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 <div class="modal-overlay" id="edit-modal">
   <div class="profile-modal">
     <div class="profile-modal-head">
-      <button class="modal-close" onclick="closeEditModal()">✕</button>
+      <button class="modal-close" onclick="closeEditModal()"><i class="fa-solid fa-xmark"></i></button>
       <img class="avatar" id="pm-avatar" src="" alt=""/>
       <div class="pname" id="pm-name"></div>
       <div id="pm-status" style="display:none"></div>
@@ -318,7 +325,7 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
     <div class="profile-modal-body" id="pm-fields"></div>
     <div class="profile-modal-foot">
       <button class="btn-modal cancel" onclick="closeEditModal()">ยกเลิก</button>
-      <button class="btn-modal save" id="pm-save-btn" onclick="saveEditModal()">💾 บันทึก</button>
+      <button class="btn-modal save" id="pm-save-btn" onclick="saveEditModal()"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
     </div>
   </div>
 </div>
@@ -327,16 +334,24 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 <div class="modal-overlay" id="line-modal">
   <div class="line-modal">
     <div class="profile-modal-head" style="padding:16px">
-      <button class="modal-close" onclick="closeLineModal()">✕</button>
+      <button class="modal-close" onclick="closeLineModal()"><i class="fa-solid fa-xmark"></i></button>
       <img class="avatar" id="lm-avatar" src="" style="width:60px;height:60px"/>
       <div class="pname" id="lm-name" style="font-size:15px"></div>
     </div>
     <div style="padding:16px">
-      <a id="lm-share-btn" class="quick-link-btn" href="#" target="_blank">🔗 เปิดลิงก์แชร์</a>
+      <a id="lm-share-btn" class="quick-link-btn" href="#" target="_blank"><i class="fa-solid fa-link"></i> เปิดลิงก์แชร์</a>
       <div class="push-box" style="margin-top:4px">
-        <label style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px;display:block">💬 ส่งข้อความถึง influencer</label>
+        <label style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px;display:block"><i class="fa-solid fa-comment-dots"></i> ส่งข้อความถึง influencer</label>
         <textarea id="lm-push-text" placeholder="พิมพ์ข้อความ..."></textarea>
-        <button class="btn-push" id="lm-push-btn" onclick="sendLineMessage()" style="width:100%">📤 ส่งข้อความ</button>
+        <div id="lm-img-preview" style="display:none;margin-top:8px;position:relative;width:fit-content">
+          <img id="lm-img-preview-img" src="" style="width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid #e5e7eb"/>
+          <button type="button" onclick="clearLineImage()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#dc2626;color:#fff;border:none;cursor:pointer;font-size:10px"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <label class="file-btn-sm" style="margin-top:8px;display:inline-block">
+          <i class="fa-solid fa-image"></i> แนบรูป
+          <input type="file" accept="image/*" style="display:none" onchange="pickLineImage(this)"/>
+        </label>
+        <button class="btn-push" id="lm-push-btn" onclick="sendLineMessage()" style="width:100%"><i class="fa-solid fa-paper-plane"></i> ส่งข้อความ</button>
       </div>
     </div>
   </div>
@@ -410,11 +425,11 @@ async function gasPost(payload) {
       // ไม่มีสิทธิ์ — แจ้ง + (GAS บันทึก log แล้ว)
       hideSpinner();
       setGate('ไม่มีสิทธิ์เข้าถึง', 'บัญชี LINE ของคุณไม่อยู่ในรายชื่อผู้ดูแล', 'LINE ID: '+me.lineId, true);
-      el('big') && (el('big').textContent = '🚫');
+      el('big') && (el('big').innerHTML = '<i class="fa-solid fa-ban"></i>');
       // เปลี่ยน spinner เป็นไอคอนห้าม
       const card = document.querySelector('#gate .card');
       const icon = document.createElement('div');
-      icon.className = 'big-icon'; icon.textContent = '🚫';
+      icon.className = 'big-icon'; icon.innerHTML = '<i class="fa-solid fa-ban"></i>';
       card.insertBefore(icon, card.firstChild);
       return;
     }
@@ -455,7 +470,7 @@ async function loadTable() {
     buildStatusFilter();
     renderTable();
   } catch (err) {
-    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="10">⚠️ ${err.message}</td></tr>`;
+    el('tbody-rows').innerHTML = `<tr class="empty-row"><td colspan="10"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</td></tr>`;
   }
 }
 
@@ -506,7 +521,7 @@ function copyToClipboard(text, ev) {
   navigator.clipboard.writeText(text).then(() => {
     const btn = ev.target;
     const old = btn.textContent;
-    btn.textContent = '✅';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
     setTimeout(() => { btn.textContent = old; }, 1000);
   }).catch(() => alert('คัดลอกไม่สำเร็จ'));
 }
@@ -519,21 +534,27 @@ function renderCellValue(c, val, row) {
   // คะแนน — ทศนิยม 1 ตำแหน่ง
   if (c.type === 'stars') {
     const n = Number(val) || 0;
-    return n > 0 ? `⭐ ${n.toFixed(1)}` : '—';
+    return n > 0 ? `<i class="fa-solid fa-star" style="color:#fbbf24"></i> ${n.toFixed(1)}` : '—';
   }
   // สถานะ — badge สี
   if (c.type === 'select' && val) {
     if (c.key === 'status') return statusBadge(String(val));
     return `<span class="rstatus" style="display:inline-block">${escapeHtml(String(val))}</span>`;
   }
-  // สลิป
+  // สลิป (รูปเดียว)
   if (c.type === 'image') {
-    return val ? `<a href="${val}" target="_blank" onclick="event.stopPropagation()">📎 ดูสลิป</a>` : '—';
+    return val ? `<img class="row-thumb" src="${val}" onclick="openLightbox('${val}', event)"/>` : '—';
+  }
+  // เอกสาร/Stat (หลายรูป คั่นด้วย comma) — แสดงเป็นแถวทรัมเนลเล็ก
+  if (c.type === 'images') {
+    const urls = String(val||'').split(',').map(u=>u.trim()).filter(Boolean);
+    if (!urls.length) return '—';
+    return `<div class="doc-thumbs">${urls.map(u=>`<img class="row-thumb" src="${u}" onclick="openLightbox('${u}', event)"/>`).join('')}</div>`;
   }
   // ชื่อ LINE — แทรกปุ่ม 💬 เปิด LINE modal
   if (c.key === 'line_name' && row) {
     const safe = escapeHtml(String(val || '—'));
-    return `${safe} <span class="line-link" onclick="event.stopPropagation(); openLineModal(${row._rowIndex})">💬</span>`;
+    return `${safe} <span class="line-link" onclick="event.stopPropagation(); openLineModal(${row._rowIndex})"><i class="fa-solid fa-comment-dots"></i></span>`;
   }
   // เบอร์โทร — ไอคอนโทรอยู่หน้า ติดกับเลข (เฉพาะถ้าเป็นเบอร์จริง)
   if (c.key === 'phone' && val) {
@@ -542,7 +563,7 @@ function renderCellValue(c, val, row) {
     const safe = escapeHtml(phoneStr);
     if (isPhone) {
       const tel = phoneStr.replace(/[\s()\-]/g,'');
-      return `<a class="cell-icon" href="tel:${tel}" onclick="event.stopPropagation()">📞</a>${safe}`;
+      return `<a class="cell-icon" href="tel:${tel}" onclick="event.stopPropagation()"><i class="fa-solid fa-phone"></i></a>${safe}`;
     }
     return safe;
   }
@@ -550,12 +571,12 @@ function renderCellValue(c, val, row) {
   if (c.key === 'tiktok' && val) {
     const uname = String(val).replace(/^@/,'');
     const safe = escapeHtml(String(val));
-    return `<a class="cell-icon" href="https://www.tiktok.com/@${uname}" target="_blank" onclick="event.stopPropagation()">🎵</a>${safe}`;
+    return `<a class="cell-icon" href="https://www.tiktok.com/@${uname}" target="_blank" onclick="event.stopPropagation()"><i class="fa-brands fa-tiktok"></i></a>${safe}`;
   }
   // เจนโค้ด / เลขบัญชี — ไอคอน copy อยู่หน้า
   if ((c.key === 'gen_code' || c.key === 'bank_account') && val) {
     const safe = escapeHtml(String(val));
-    return `<span class="cell-icon" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" style="cursor:pointer">📋</span>${safe}`;
+    return `<span class="cell-icon" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" style="cursor:pointer"><i class="fa-regular fa-copy"></i></span>${safe}`;
   }
   return escapeHtml(String(val ?? '') || '—');
 }
@@ -591,8 +612,8 @@ function renderTable() {
     });
     if (me.role === 'admin') {
       html += `<td><div class="row-actions">
-        <button class="icon-btn" onclick="openEditModal(${row._rowIndex})" title="แก้ไข">✏️</button>
-        <button class="icon-btn danger" onclick="deleteRow(${row._rowIndex})" title="ลบ">🗑️</button>
+        <button class="icon-btn" onclick="openEditModal(${row._rowIndex})" title="แก้ไข"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn danger" onclick="deleteRow(${row._rowIndex})" title="ลบ"><i class="fa-solid fa-trash"></i></button>
       </div></td>`;
     }
     html += '</tr>';
@@ -713,27 +734,27 @@ async function openEditModal(rowIndex, mode) {
     if (row.timestamp) {
       const days = daysSince(row.timestamp);
       if (days !== null) {
-        el('pm-days').textContent = `📅 ร่วมงานมาแล้ว ${days} วัน`;
+        el('pm-days').innerHTML = `<i class="fa-regular fa-calendar"></i> ร่วมงานมาแล้ว ${days} วัน`;
         el('pm-days').style.display = 'inline-block';
       }
     }
 
     // ปุ่ม quick-action แบบไอคอนวงกลม — โฟลเดอร์ 4, ลิงก์โพสต์ 2, แชร์, โทร, ส่งข้อความ
     let icons = [];
-    if (row.folder_id)        icons.push({icon:'📁', cap:'Main',    href:'https://drive.google.com/drive/folders/'+row.folder_id, cls:''});
-    if (row.folder_final_id)  icons.push({icon:'🎬', cap:'Master',  href:'https://drive.google.com/drive/folders/'+row.folder_final_id, cls:''});
-    if (row.folder_footage_id)icons.push({icon:'🎥', cap:'Footage', href:'https://drive.google.com/drive/folders/'+row.folder_footage_id, cls:''});
-    if (row.folder_stat_id)   icons.push({icon:'📊', cap:'Stat',    href:'https://drive.google.com/drive/folders/'+row.folder_stat_id, cls:''});
+    if (row.folder_id)        icons.push({icon:'<i class="fa-solid fa-folder"></i>', cap:'Main',    href:'https://drive.google.com/drive/folders/'+row.folder_id, cls:''});
+    if (row.folder_final_id)  icons.push({icon:'<i class="fa-solid fa-clapperboard"></i>', cap:'Master',  href:'https://drive.google.com/drive/folders/'+row.folder_final_id, cls:''});
+    if (row.folder_footage_id)icons.push({icon:'<i class="fa-solid fa-video"></i>', cap:'Footage', href:'https://drive.google.com/drive/folders/'+row.folder_footage_id, cls:''});
+    if (row.folder_stat_id)   icons.push({icon:'<i class="fa-solid fa-chart-column"></i>', cap:'Stat',    href:'https://drive.google.com/drive/folders/'+row.folder_stat_id, cls:''});
     if (row.post_link_1_platform && row.post_link_1_url)
-      icons.push({icon:'🔗', cap:escapeHtml(row.post_link_1_platform), href:row.post_link_1_url, cls:'green'});
+      icons.push({icon:'<i class="fa-solid fa-link"></i>', cap:escapeHtml(row.post_link_1_platform), href:row.post_link_1_url, cls:'green'});
     if (row.post_link_2_platform && row.post_link_2_url)
-      icons.push({icon:'🔗', cap:escapeHtml(row.post_link_2_platform), href:row.post_link_2_url, cls:'green'});
+      icons.push({icon:'<i class="fa-solid fa-link"></i>', cap:escapeHtml(row.post_link_2_platform), href:row.post_link_2_url, cls:'green'});
     if (row.share_url)
-      icons.push({icon:'📤', cap:'แชร์', href:row.share_url, cls:'green'});
+      icons.push({icon:'<i class="fa-solid fa-share-nodes"></i>', cap:'แชร์', href:row.share_url, cls:'green'});
     if (row.phone) {
       const phoneStr = String(row.phone).trim();
       if (/^[0-9+\-\s()]{6,}$/.test(phoneStr)) {
-        icons.push({icon:'📞', cap:'โทร', href:'tel:'+phoneStr.replace(/[\s()\-]/g,''), cls:'blue'});
+        icons.push({icon:'<i class="fa-solid fa-phone"></i>', cap:'โทร', href:'tel:'+phoneStr.replace(/[\s()\-]/g,''), cls:'blue'});
       }
     }
 
@@ -744,7 +765,7 @@ async function openEditModal(rowIndex, mode) {
     });
     // ปุ่มส่งข้อความ — เปิด LINE modal โดยใช้ row ที่โหลดไว้แล้ว (ใช้ได้ทุก context: ตาราง/การเงิน/ranking/ฐานข้อมูล)
     quickHtml += `<button type="button" class="action-icon blue" onclick="openLineModal(${rowIndex}, CURRENT_MODAL_ROW)">
-      <span class="circle">💬</span><span class="cap">ข้อความ</span></button>`;
+      <span class="circle"><i class="fa-solid fa-comment-dots"></i></span><span class="cap">ข้อความ</span></button>`;
     quickHtml += '</div>';
     el('pm-quick').innerHTML = quickHtml;
 
@@ -769,7 +790,7 @@ async function openEditModal(rowIndex, mode) {
       if (mode === 'finance' && c.key === 'gen_code') {
         if (val) {
           html += `<div class="pf-field"><label>${c.label}</label>
-            <button type="button" class="copy-only-btn" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)">📋 คัดลอกเจนโค้ด</button></div>`;
+            <button type="button" class="copy-only-btn" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)"><i class="fa-regular fa-copy"></i> คัดลอกเจนโค้ด</button></div>`;
         }
         return;
       }
@@ -784,7 +805,7 @@ async function openEditModal(rowIndex, mode) {
         const n = Number(val) || 0;
         html += `<div class="pf-field"><label>${c.label}</label>
           <div class="rating-slider-wrap" data-key="${c.key}" data-type="stars" data-value="${n}">
-            <div class="rating-value" id="rv-${c.key}"><span class="star">⭐</span> ${n.toFixed(1)}</div>
+            <div class="rating-value" id="rv-${c.key}"><span class="star"><i class="fa-solid fa-star"></i></span> ${n.toFixed(1)}</div>
             <input type="range" class="rating-slider" min="0" max="5" step="0.1" value="${n}"
               oninput="onRatingSlide(this, '${c.key}')" ${c.editable?'':'disabled'}/>
           </div></div>`;
@@ -804,20 +825,20 @@ async function openEditModal(rowIndex, mode) {
           html += `<div class="pf-field"><label>${c.label}</label>
             <div class="slip-box" data-key="${c.key}" data-type="image" data-value="${val||''}">
               ${imgPreview}
-              <label class="file-btn-sm">📎 อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
+              <label class="file-btn-sm"><i class="fa-solid fa-paperclip"></i> อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
             </div></div>`;
         } else if (val) {
           html += `<div class="pf-field"><label>${c.label}</label>
             <div class="img-gallery"><img src="${val}" onclick="openLightbox('${val}', event)"/></div></div>`;
         }
       } else {
-        html += `<div class="pf-field"><label>${c.label}${c.editable?'':' 🔒'}</label>
+        html += `<div class="pf-field"><label>${c.label}${c.editable?'':' <i class="fa-solid fa-lock" style="font-size:10px"></i>'}</label>
           <input type="text" data-key="${c.key}" data-type="text" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable?'':'disabled'}/></div>`;
       }
     });
     el('pm-fields').innerHTML = html;
   } catch (err) {
-    el('pm-fields').innerHTML = `<p style="text-align:center;color:#dc2626;font-size:13px;padding:20px">⚠️ ${err.message}</p>`;
+    el('pm-fields').innerHTML = `<p style="text-align:center;color:#dc2626;font-size:13px;padding:20px"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</p>`;
   }
 }
 
@@ -835,7 +856,7 @@ function daysSince(tsStr) {
 function onRatingSlide(slider, key) {
   const val = parseFloat(slider.value);
   slider.parentElement.dataset.value = val;
-  el('rv-' + key).innerHTML = `<span class="star">⭐</span> ${val.toFixed(1)}`;
+  el('rv-' + key).innerHTML = `<span class="star"><i class="fa-solid fa-star"></i></span> ${val.toFixed(1)}`;
 }
 
 async function uploadSlipFile(input) {
@@ -908,12 +929,16 @@ async function saveEditModal() {
   } catch (err) {
     alert('บันทึกไม่สำเร็จ: ' + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = '💾 บันทึก';
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึก';
   }
 }
 
 // ══════════════════════ LINE MODAL — แชร์ + ส่งข้อความ (แยกจาก edit modal) ══════════════════════
 let LINE_TARGET_LINEID = null;
+
+let LM_IMAGE_BASE64 = null;
+let LM_IMAGE_NAME = '';
+let LM_IMAGE_TYPE = '';
 
 function openLineModal(rowIndex, rowData) {
   const row = rowData || TABLE_ROWS.find(r => r._rowIndex === rowIndex) || FIN_ROWS.find(r => r.rowIndex === rowIndex);
@@ -932,6 +957,7 @@ function openLineModal(rowIndex, rowData) {
     shareBtn.style.display = 'none';
   }
   el('lm-push-text').value = '';
+  clearLineImage();
   el('line-modal').classList.add('active');
 }
 
@@ -940,25 +966,49 @@ function closeLineModal() {
   LINE_TARGET_LINEID = null;
 }
 
+// ── แนบรูปก่อนส่งข้อความ ──
+function pickLineImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    LM_IMAGE_BASE64 = reader.result.split(',')[1];
+    LM_IMAGE_NAME = file.name;
+    LM_IMAGE_TYPE = file.type;
+    el('lm-img-preview-img').src = reader.result;
+    el('lm-img-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function clearLineImage() {
+  LM_IMAGE_BASE64 = null; LM_IMAGE_NAME = ''; LM_IMAGE_TYPE = '';
+  el('lm-img-preview').style.display = 'none';
+  el('lm-img-preview-img').src = '';
+}
+
 async function sendLineMessage() {
   const msg = el('lm-push-text').value.trim();
-  if (!msg) { alert('กรุณากรอกข้อความ'); return; }
+  if (!msg && !LM_IMAGE_BASE64) { alert('กรุณากรอกข้อความหรือแนบภาพ'); return; }
   if (!LINE_TARGET_LINEID) { alert('ไม่พบ LINE ID ปลายทาง'); return; }
 
   const btn = el('lm-push-btn');
-  btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+  btn.disabled = true; btn.innerHTML = 'กำลังส่ง...';
   try {
-    const res = await gasPost({
-      action:'bk_push', lineId: me.lineId,
-      targetLineId: LINE_TARGET_LINEID, message: msg
-    });
+    const payload = { action:'bk_push', lineId: me.lineId, targetLineId: LINE_TARGET_LINEID, message: msg };
+    if (LM_IMAGE_BASE64) {
+      payload.imageBase64 = LM_IMAGE_BASE64;
+      payload.imageFileName = LM_IMAGE_NAME;
+      payload.imageMimeType = LM_IMAGE_TYPE;
+    }
+    const res = await gasPost(payload);
     if (!res.success) throw new Error(res.error || 'ส่งไม่สำเร็จ');
     el('lm-push-text').value = '';
-    btn.textContent = '✅ ส่งแล้ว';
-    setTimeout(() => { btn.textContent = '📤 ส่งข้อความ'; }, 1500);
+    clearLineImage();
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> ส่งแล้ว';
+    setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ส่งข้อความ'; }, 1500);
   } catch (err) {
     alert('ส่งข้อความไม่สำเร็จ: ' + err.message);
-    btn.textContent = '📤 ส่งข้อความ';
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ส่งข้อความ';
   } finally {
     btn.disabled = false;
   }
@@ -995,7 +1045,7 @@ async function loadRanking() {
     RANK_LOADED = true;
     renderRanking(res.list);
   } catch (err) {
-    el('rank-grid').innerHTML = `<div class="placeholder">⚠️ ${err.message}</div>`;
+    el('rank-grid').innerHTML = `<div class="placeholder"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</div>`;
   }
 }
 
@@ -1004,10 +1054,10 @@ function renderRanking(list) {
     el('rank-grid').innerHTML = `<div class="placeholder">ยังไม่มีข้อมูล</div>`;
     return;
   }
-  const medals = ['🥇','🥈','🥉'];
+  const medals = ['<i class="fa-solid fa-medal" style="color:#FFD700"></i>','<i class="fa-solid fa-medal" style="color:#C0C0C0"></i>','<i class="fa-solid fa-medal" style="color:#CD7F32"></i>'];
   let html = '';
   list.forEach((r, i) => {
-    const stars = r.rating > 0 ? `⭐ ${Number(r.rating).toFixed(1)}` : '<span style="color:#d1d5db">ยังไม่ให้คะแนน</span>';
+    const stars = r.rating > 0 ? `<i class="fa-solid fa-star" style="color:#fbbf24"></i> ${Number(r.rating).toFixed(1)}` : '<span style="color:#d1d5db">ยังไม่ให้คะแนน</span>';
     html += `<div class="rank-card" onclick="openEditModal(${r.rowIndex}, 'ranking')" style="cursor:pointer">
       ${i < 3 ? `<span class="medal">${medals[i]}</span>` : ''}
       <img src="${r.photo || ''}" alt=""/>
@@ -1031,17 +1081,17 @@ async function loadFinance() {
     renderStatusOverview(FIN_COUNTS);
     renderFinance();
   } catch (err) {
-    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="10">⚠️ ${err.message}</td></tr>`;
+    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="10"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</td></tr>`;
   }
 }
 
 function renderStatusOverview(counts) {
   const order = [
-    { s:'รอตรวจสอบ',   icon:'⏳' },
-    { s:'อนุมัติแล้ว',  icon:'✅' },
-    { s:'เข้าคิวจ่าย',  icon:'🕓' },
-    { s:'จ่ายเงินแล้ว', icon:'💸' },
-    { s:'ตีกลับ',       icon:'↩️' }
+    { s:'รอตรวจสอบ',   icon:'<i class="fa-solid fa-hourglass-half"></i>' },
+    { s:'อนุมัติแล้ว',  icon:'<i class="fa-solid fa-circle-check"></i>' },
+    { s:'เข้าคิวจ่าย',  icon:'<i class="fa-solid fa-clock"></i>' },
+    { s:'จ่ายเงินแล้ว', icon:'<i class="fa-solid fa-money-bill-transfer"></i>' },
+    { s:'ตีกลับ',       icon:'<i class="fa-solid fa-rotate-left"></i>' }
   ];
   let html = '';
   order.forEach(o => {
@@ -1074,7 +1124,7 @@ function renderFinance() {
   el('finance-count').textContent = filtered.length + ' / ' + FIN_ROWS.length + ' รายการ';
 
   if (!filtered.length) {
-    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="11">ไม่พบข้อมูล</td></tr>`;
+    el('finance-rows').innerHTML = `<tr class="empty-row"><td colspan="12">ไม่พบข้อมูล</td></tr>`;
     return;
   }
 
@@ -1083,11 +1133,16 @@ function renderFinance() {
     const tiktokLink = r.tiktok
       ? `<a class="name-link" href="https://www.tiktok.com/@${String(r.tiktok).replace(/^@/,'')}" target="_blank">${escapeHtml(r.nickname||'—')}</a>`
       : escapeHtml(r.nickname||'—');
+    const docUrls = String(r.docUrls||'').split(',').map(u=>u.trim()).filter(Boolean);
+    const docCell = docUrls.length
+      ? `<div class="doc-thumbs">${docUrls.map(u=>`<img class="row-thumb" src="${u}" onclick="openLightbox('${u}', event)"/>`).join('')}</div>`
+      : '—';
     html += `<tr>
-      <td><button class="gear-btn" onclick="openEditModal(${r.rowIndex}, 'finance')" title="จัดการ">⚙️</button></td>
+      <td><button class="gear-btn" onclick="openEditModal(${r.rowIndex}, 'finance')" title="จัดการ"><i class="fa-solid fa-gear"></i></button></td>
       <td>${statusBadge(r.status)}</td>
       <td class="thumb-cell">${r.profilePhoto ? `<img class="row-thumb" src="${r.profilePhoto}" onclick="openLightbox('${r.profilePhoto}', event)"/>` : ''}</td>
       <td>${tiktokLink}</td>
+      <td>${docCell}</td>
       <td>${escapeHtml(r.bankName||'—')}</td>
       <td>${escapeHtml(String(r.bankAccount||'—'))}</td>
       <td>${escapeHtml(r.accountName||'—')}</td>
@@ -1109,7 +1164,7 @@ async function loadDirectory() {
     DIR_LIST = res.list;
     renderDirectory();
   } catch (err) {
-    el('directory-grid').innerHTML = `<div class="placeholder">⚠️ ${err.message}</div>`;
+    el('directory-grid').innerHTML = `<div class="placeholder"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message}</div>`;
   }
 }
 
@@ -1132,6 +1187,7 @@ function renderDirectory() {
       <div class="dname">${escapeHtml(d.nickname || '—')}</div>
       <div class="dtiktok">@${escapeHtml(d.tiktok || '')}</div>
       ${d.status ? statusBadge(d.status) : ''}
+      ${d.timestamp ? `<div class="ddate"><i class="fa-regular fa-calendar"></i> ${formatTsCompact(d.timestamp)}</div>` : ''}
     </div>`;
   });
   el('directory-grid').innerHTML = html;
