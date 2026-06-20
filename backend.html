@@ -13,6 +13,30 @@
 body{font-family:'Sarabun',sans-serif;background:#f7f8fa;color:#111;min-height:100vh;-webkit-font-smoothing:antialiased}
 
 .fa-lock:before { color: #ff5353;}
+.fa-tiktok:before {color: black;}
+.fa-phone:before {color: #914600;}
+.fa-trash:before {color: #6f6f6f;}
+.fa-pen:before {color: #f0b826;}
+element.style {padding: 0PX 10PX;border-radius: 5PX;}
+.fa-cog:before, .fa-gear:before {COLOR: #ea6060;}
+.fa-chain:before, .fa-link:before {COLOR: #fbbf24;}
+
+  .fa-comment-dots:before, .fa-commenting:before {
+    content: "\f4ad";
+    COLOR: #1aaf58;
+}
+
+  .fa-share-alt:before, .fa-share-nodes:before {
+    content: "\f1e0";
+    COLOR: #1aaf58;
+}
+
+  .fa-phone:before {
+    content: "\f095";
+    color: #ed4b4b;
+}
+
+  
   
 /* ── หน้า center (loading / login / denied) ── */
 .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -196,7 +220,7 @@ input[type="range"].rating-slider{width:100%;accent-color:#fbbf24;height:6px}
 .line-modal{background:#fff;border-radius:14px;max-width:340px;width:100%;margin-top:60px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2)}
 
 /* ── row thumbnail (รูปโปรไฟล์หน้าแถว — ไม่กระทบความสูงแถว) ── */
-.row-thumb{width:28px;height:28px;border-radius:50%;object-fit:cover;cursor:pointer;display:block;background:#e5e7eb;flex-shrink:0}
+.row-thumb{width:28px;height:28px;border-radius:5PX;object-fit:cover;cursor:pointer;display:block;background:#e5e7eb;flex-shrink:0}
 .thumb-cell{padding:5px 8px!important;width:36px}
 .doc-thumbs{display:flex;gap:4px}
 td:has(.doc-thumbs){max-width:none;overflow:visible}
@@ -830,18 +854,21 @@ async function openEditModal(rowIndex, mode) {
     if (row.folder_final_id)  icons.push({icon:'<i class="fa-solid fa-clapperboard"></i>', cap:'Master',  href:'https://drive.google.com/drive/folders/'+row.folder_final_id, cls:''});
     if (row.folder_footage_id)icons.push({icon:'<i class="fa-solid fa-video"></i>', cap:'Footage', href:'https://drive.google.com/drive/folders/'+row.folder_footage_id, cls:''});
     if (row.folder_stat_id)   icons.push({icon:'<i class="fa-solid fa-chart-column"></i>', cap:'Stat',    href:'https://drive.google.com/drive/folders/'+row.folder_stat_id, cls:''});
+
+        if (row.phone) {
+      const phoneStr = String(row.phone).trim();
+      if (/^[0-9+\-\s()]{6,}$/.test(phoneStr)) {
+        icons.push({icon:'<i class="fa-solid fa-phone"></i>', cap:'โทร', href:'tel:'+phoneStr.replace(/[\s()\-]/g,''), cls:'blue'});
+      }
+    }
+    
     if (row.post_link_1_platform && row.post_link_1_url)
       icons.push({icon:'<i class="fa-solid fa-link"></i>', cap:escapeHtml(row.post_link_1_platform), href:row.post_link_1_url, cls:'green'});
     if (row.post_link_2_platform && row.post_link_2_url)
       icons.push({icon:'<i class="fa-solid fa-link"></i>', cap:escapeHtml(row.post_link_2_platform), href:row.post_link_2_url, cls:'green'});
     if (row.share_url)
       icons.push({icon:'<i class="fa-solid fa-share-nodes"></i>', cap:'แชร์', href:row.share_url, cls:'green'});
-    if (row.phone) {
-      const phoneStr = String(row.phone).trim();
-      if (/^[0-9+\-\s()]{6,}$/.test(phoneStr)) {
-        icons.push({icon:'<i class="fa-solid fa-phone"></i>', cap:'โทร', href:'tel:'+phoneStr.replace(/[\s()\-]/g,''), cls:'blue'});
-      }
-    }
+
 
     let quickHtml = '<div class="action-grid">';
     icons.forEach(o => {
