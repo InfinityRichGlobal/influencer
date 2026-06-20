@@ -204,6 +204,16 @@ td:has(.doc-thumbs){max-width:none;overflow:visible}
 .lightbox-overlay.active{display:flex}
 .lightbox-overlay img{max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
 
+/* ── delete password confirmation modal ── */
+.del-pwd-box{background:#fff;border-radius:18px;max-width:340px;width:100%;padding:28px 24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.del-pwd-icon{font-size:34px;color:#dc2626;margin-bottom:10px}
+.del-pwd-title{font-size:17px;font-weight:800;color:#111;margin-bottom:6px}
+.del-pwd-sub{font-size:12.5px;color:#888;line-height:1.5;margin-bottom:16px}
+.del-pwd-field{width:100%;border:none;box-shadow:inset 0 0 0 1.5px #e5e7eb;border-radius:10px;padding:11px 13px;font-size:14px;font-family:'Sarabun',sans-serif;outline:none;background:#f8fafc;text-align:center}
+.del-pwd-field:focus{box-shadow:inset 0 0 0 2px #dc2626;background:#fff}
+.del-pwd-error{color:#dc2626;font-size:12px;margin-top:8px}
+.del-pwd-actions{display:flex;gap:10px;margin-top:18px}
+
 /* ── gear icon manage button ── */
 .gear-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:4px}
 .gear-btn:hover{background:#f1f5f9}
@@ -384,6 +394,21 @@ td:has(.doc-thumbs){max-width:none;overflow:visible}
 <!-- LIGHTBOX — ขยายรูปเต็มจอ -->
 <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
   <img id="lightbox-img" src="" alt=""/>
+</div>
+
+<!-- DELETE PASSWORD MODAL — ยืนยันรหัสผ่านก่อนลบรูป -->
+<div class="modal-overlay" id="delete-pwd-modal">
+  <div class="del-pwd-box">
+    <div class="del-pwd-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div class="del-pwd-title">ยืนยันการลบรูป</div>
+    <p class="del-pwd-sub">รูปจะถูกย้ายไปโฟลเดอร์ "delete" ไม่ได้ลบถาวร แต่ต้องใส่รหัสผ่านเพื่อยืนยัน</p>
+    <input type="password" id="del-pwd-input" class="del-pwd-field" placeholder="รหัสผ่าน" onkeydown="if(event.key==='Enter')confirmDeletePassword()"/>
+    <p class="del-pwd-error" id="del-pwd-error" style="display:none"></p>
+    <div class="del-pwd-actions">
+      <button class="btn-modal cancel" onclick="closeDeletePwdModal()">ยกเลิก</button>
+      <button class="btn-modal" style="background:#dc2626;color:#fff" onclick="confirmDeletePassword()"><i class="fa-solid fa-trash"></i> ยืนยันลบ</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -878,11 +903,14 @@ async function openEditModal(rowIndex, mode) {
           html += `<div class="pf-field"><label>${c.label}</label>
             <div class="img-gallery-edit" id="ige-${c.key}">${items}${addBtn}</div></div>`;
         } else if (c.editable) {
-          const imgPreview = val ? `<img src="${val}" onclick="openLightbox('${val}', event)"/>` : '';
+          const imgItem = val ? `<div class="img-item">
+              <img src="${val}" onclick="openLightbox('${val}', event)"/>
+              <button type="button" class="img-del-btn" onclick="deleteSlipImage('${c.key}')"><i class="fa-solid fa-xmark"></i></button>
+            </div>` : '';
           html += `<div class="pf-field"><label>${c.label}</label>
             <div class="slip-box" data-key="${c.key}" data-type="image" data-value="${val||''}">
-              ${imgPreview}
-              <label class="file-btn-sm"><i class="fa-solid fa-paperclip"></i> อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
+              ${imgItem}
+              <label class="file-btn-sm"><i class="fa-solid fa-paperclip"></i> ${val ? 'เปลี่ยนรูป' : 'อัพโหลดสลิป'}<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/></label>
             </div></div>`;
         } else if (val) {
           html += `<div class="pf-field"><label>${c.label}</label>
@@ -974,20 +1002,66 @@ async function uploadDocImage(input, key) {
 }
 
 // ── เอกสาร/Stat — ลบรูปทีละใบ ──
+// ── ลบรูป (เอกสาร/Stat/สลิป) — ต้องใส่รหัสผ่านยืนยันก่อน ──
+// ใช้ popup รหัสผ่านร่วมกัน เก็บ callback ไว้ทำงานต่อหลังกรอกถูก
+let DELETE_IMG_CALLBACK = null;
+
+function askDeletePassword(onConfirm) {
+  DELETE_IMG_CALLBACK = onConfirm;
+  el('del-pwd-input').value = '';
+  el('del-pwd-error').style.display = 'none';
+  el('delete-pwd-modal').classList.add('active');
+  setTimeout(() => el('del-pwd-input').focus(), 100);
+}
+function closeDeletePwdModal() {
+  el('delete-pwd-modal').classList.remove('active');
+  DELETE_IMG_CALLBACK = null;
+}
+async function confirmDeletePassword() {
+  const pwd = el('del-pwd-input').value;
+  if (!pwd) { el('del-pwd-error').textContent = 'กรุณากรอกรหัสผ่าน'; el('del-pwd-error').style.display = 'block'; return; }
+  const cb = DELETE_IMG_CALLBACK;
+  closeDeletePwdModal();
+  if (cb) await cb(pwd);
+}
+
 async function deleteDocImage(key, url, btnEl) {
-  if (!confirm('ลบรูปนี้?')) return;
-  try {
-    const res = await gasPost({
-      action:'bk_deleteImage', lineId: me.lineId, rowIndex: EDIT_ROW_INDEX,
-      key, url
-    });
-    if (!res.success) throw new Error(res.error || 'ลบไม่สำเร็จ');
-    btnEl.closest('.img-item').remove();
-    const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
-    if (row && row[key] !== undefined) row[key] = res.allUrls;
-  } catch (err) {
-    alert('ลบรูปไม่สำเร็จ: ' + err.message);
-  }
+  askDeletePassword(async (pwd) => {
+    try {
+      const res = await gasPost({
+        action:'bk_deleteImage', lineId: me.lineId, rowIndex: EDIT_ROW_INDEX,
+        key, url, password: pwd
+      });
+      if (!res.success) throw new Error(res.error || 'ลบไม่สำเร็จ');
+      btnEl.closest('.img-item').remove();
+      const row = TABLE_ROWS.find(r => r._rowIndex === EDIT_ROW_INDEX);
+      if (row && row[key] !== undefined) row[key] = res.allUrls;
+    } catch (err) {
+      alert('ลบรูปไม่สำเร็จ: ' + err.message);
+    }
+  });
+}
+
+async function deleteSlipImage(key) {
+  const box = document.querySelector(`.slip-box[data-key="${key}"]`);
+  const url = box ? box.dataset.value : '';
+  if (!url) { alert('ไม่มีรูปให้ลบ'); return; }
+  askDeletePassword(async (pwd) => {
+    try {
+      const res = await gasPost({
+        action:'bk_deleteImage', lineId: me.lineId, rowIndex: EDIT_ROW_INDEX,
+        key, url, password: pwd
+      });
+      if (!res.success) throw new Error(res.error || 'ลบไม่สำเร็จ');
+      box.dataset.value = '';
+      const item = box.querySelector('.img-item');
+      if (item) item.remove();
+      const btn = box.querySelector('.file-btn-sm');
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-paperclip"></i> อัพโหลดสลิป<input type="file" accept="image/*" style="display:none" onchange="uploadSlipFile(this)"/>';
+    } catch (err) {
+      alert('ลบรูปไม่สำเร็จ: ' + err.message);
+    }
+  });
 }
 
 function closeEditModal() {
