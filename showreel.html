@@ -8,6 +8,17 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
+    /* ---- CSS ที่คุณปรับจูนสำหรับมือถือ ---- */
+    .px-4 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+    .mb-8 { margin-bottom: 1rem !important; }
+    .text-xl { font-size: 1.1rem !important; line-height: 0.1rem !important; }
+    .mb-0\.5 { margin-bottom: 0.001rem !important; }
+    .tracking-wide { letter-spacing: 0.04em !important; }
+    .tracking-wider { letter-spacing: 0.02em !important; }
+    .gap-1 { gap: 0.001rem !important; }
+    .w-10 { width: 2.1rem !important; }
+    /* ---------------------------------- */
+
     body { 
       font-family: 'Prompt', sans-serif; 
       background-color: #ffffff; 
@@ -32,49 +43,15 @@
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* เอฟเฟกต์สำหรับ Modal (Lightbox) */
-    #image-modal {
-      backdrop-filter: blur(5px);
-    }
-
-.px-4 {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-}
-.mb-8 {
-    margin-bottom: 1rem;
-}
-.text-xl {
-    font-size: 1.1rem;
-    line-height: 0.1rem;
-}
-.mb-0\.5 {
-    margin-bottom: 0.001rem;
-}
-.tracking-wide {
-    letter-spacing: 0.04em;
-}
-.tracking-wider {
-    letter-spacing: 0.02em;
-}
-.gap-1 {
-    gap: 0.001rem;
-}
-.w-10 {
-    width: 2.1rem;
-}
-    
+    #image-modal { backdrop-filter: blur(5px); }
   </style>
 </head>
-<!-- ปรับ Padding ให้เหมาะกับมือถือ (px-4) และคอมพิวเตอร์ (md:px-20) -->
 <body class="px-4 md:px-20 py-8 md:py-16 min-h-screen flex flex-col">
 
   <div class="w-full max-w-[1600px] mx-auto">
     
-    <!-- Header Section -->
     <div class="flex flex-row items-center justify-between mb-8 md:mb-12">
       
-      <!-- ซ้าย: โลโก้ และ ชื่อเว็บ -->
       <div class="flex items-center gap-4">
          <div id="header-logo-container" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
            <div class="w-8 h-8 bg-gray-100 rounded-2xl animate-pulse"></div>
@@ -85,7 +62,6 @@
          </div>
       </div>
 
-      <!-- ขวา: ปุ่มควบคุม -->
       <div class="flex items-center gap-1 md:gap-2">
         <button onclick="shuffleAndRender()" title="สุ่มนำเสนอ" class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-2xl text-gray-500 hover:text-black hover:bg-gray-100 transition-colors">
           <i class="fa-solid fa-shuffle text-base md:text-lg"></i>
@@ -96,9 +72,7 @@
       </div>
     </div>
 
-    <!-- Container สำหรับใส่การ์ด (มือถือแสดง 2 คอลัมน์) -->
     <div id="main-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-8">
-      <!-- Loading State -->
       <div class="col-span-full flex flex-col items-center justify-center py-32 text-gray-400">
           <div class="loader mb-4"></div>
           <p class="font-light tracking-wide text-sm">กำลังเชื่อมต่อฐานข้อมูล...</p>
@@ -107,7 +81,6 @@
 
   </div>
 
-  <!-- Modal สำหรับกดดูรูปขยาย (ซ่อนไว้เป็นค่าเริ่มต้น) -->
   <div id="image-modal" class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-black bg-opacity-80 transition-opacity" onclick="closeModal()">
     <button class="absolute top-6 right-6 md:top-10 md:right-10 text-white text-3xl hover:text-gray-300 w-12 h-12 flex items-center justify-center">&times;</button>
     <img id="modal-img" src="" class="max-w-[85%] max-h-[85%] rounded-[2rem] shadow-2xl object-contain transition-transform transform scale-95 duration-300">
@@ -115,18 +88,16 @@
 
   <script>
     // ⚠️ นำ Web App URL ที่เพิ่ง Deploy ใหม่มาวางตรงนี้ ⚠️
-    const API_URL = "https://script.google.com/macros/s/AKfycbxs7Gi-p_OR6q9EroQpP-7fWknIxSOeBoe-Yyq_bL2Z8KsdrvGdMAYmyNoqclIp9huJ/exec"; 
+    const API_URL = "YOUR_GOOGLE_WEB_APP_URL_HERE"; 
 
     let rawData = [];
 
-    // ฟังก์ชันเปิด-ปิด Modal รูปภาพ
     function openModal(imgSrc) {
       const modal = document.getElementById('image-modal');
       const modalImg = document.getElementById('modal-img');
       modalImg.src = imgSrc;
       modal.classList.remove('hidden');
       modal.classList.add('flex');
-      // หน่วงเวลาเล็กน้อยเพื่อให้ Transition ทำงาน
       setTimeout(() => modalImg.classList.replace('scale-95', 'scale-100'), 10);
     }
 
@@ -140,7 +111,6 @@
       }, 200);
     }
 
-    // โหลดข้อมูลผ่าน Fetch API
     async function fetchData() {
       const container = document.getElementById('main-container');
       container.style.opacity = '0.5';
@@ -160,10 +130,17 @@
       }
     }
 
-    // อัปเดตส่วนหัวของเว็บ
+    // อัปเดตส่วนหัวของเว็บ (เพิ่มตรรกะ link_logo)
     function updateHeader(config) {
         if(config.logo) {
-            document.getElementById('header-logo-container').innerHTML = `<img src="${config.logo}" class="w-full h-full object-contain rounded-xl">`;
+            let imgTag = `<img src="${config.logo}" class="w-full h-full object-contain rounded-xl hover:scale-105 transition-transform">`;
+            
+            // เช็คว่ามีลิงก์หรือไม่ ถ้ามีให้ใส่ <a> ครอบไว้
+            if(config.link_logo) {
+                document.getElementById('header-logo-container').innerHTML = `<a href="${config.link_logo}" target="_blank" class="w-full h-full block">${imgTag}</a>`;
+            } else {
+                document.getElementById('header-logo-container').innerHTML = imgTag;
+            }
         }
         document.getElementById('header-text-container').innerHTML = `
             <h1 class="text-xl md:text-2xl font-medium tracking-wide text-gray-900 mb-0.5">${config.header}</h1>
@@ -171,7 +148,6 @@
         `;
     }
 
-    // ฟังก์ชันวาดการ์ด
     function renderCards(data) {
       const container = document.getElementById('main-container');
       container.innerHTML = '';
@@ -179,7 +155,6 @@
       data.forEach(item => {
         let socialLinksHTML = '';
         
-        // ไอคอนแพลตฟอร์มปรับให้ขอบมนล้อกับการ์ด และแสดงสีสัน
         if(item.p1_platform && item.p1_icon) {
             socialLinksHTML += `
             <a href="${item.p1_post_url || '#'}" target="_blank" class="w-8 h-8 md:w-10 md:h-10 rounded-[0.75rem] md:rounded-2xl p-1 md:p-1.5 hover:-translate-y-1 transition-all hover:shadow-md bg-gray-50 border border-gray-100 flex items-center justify-center">
@@ -194,16 +169,13 @@
         }
 
         const card = document.createElement('div');
-        // ปรับ Padding การ์ดให้แคบลง (p-4)
         card.className = "card-clean bg-white rounded-[1.5rem] md:rounded-3xl p-4 md:p-6 flex flex-col items-center relative";
         
         card.innerHTML = `
-          <!-- รูปโปรไฟล์ปรับเป็นขอบมน (rounded-2xl) และคลิกได้ -->
           <div class="w-20 h-20 md:w-28 md:h-28 rounded-2xl md:rounded-[1.5rem] overflow-hidden mb-3 md:mb-4 border border-gray-100 shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onclick="openModal('${item.profile_url}')">
             <img src="${item.profile_url}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${item.nickname}&background=fafafa&color=171717'">
           </div>
 
-          <!-- บีบระยะห่าง (Margin Bottom) ให้กระชับขึ้น -->
           <h2 class="text-base md:text-xl font-medium text-gray-900 mb-0.5 md:mb-1">${item.nickname}</h2>
           
           <a href="https://www.tiktok.com/@${item.tiktok_user}" target="_blank" class="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors mb-4 md:mb-5 group">
@@ -219,7 +191,6 @@
       });
     }
 
-    // ฟังก์ชันสุ่มการ์ด
     function shuffleAndRender() {
       let shuffled = [...rawData];
       for (let i = shuffled.length - 1; i > 0; i--) {
