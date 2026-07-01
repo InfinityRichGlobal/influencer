@@ -31,47 +31,58 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    /* เอฟเฟกต์สำหรับ Modal (Lightbox) */
+    #image-modal {
+      backdrop-filter: blur(5px);
+    }
   </style>
 </head>
-<!-- เพิ่ม Padding ให้หน้าเว็บ (px-8 md:px-20 py-12 md:py-16) -->
-<body class="px-8 md:px-20 py-12 md:py-16 min-h-screen flex flex-col">
+<!-- ปรับ Padding ให้เหมาะกับมือถือ (px-4) และคอมพิวเตอร์ (md:px-20) -->
+<body class="px-4 md:px-20 py-8 md:py-16 min-h-screen flex flex-col">
 
   <div class="w-full max-w-[1600px] mx-auto">
     
-    <!-- Header Section: จัดให้อยู่บรรทัดเดียวกัน ซ้าย-ขวา ชัดเจน -->
-    <div class="flex items-center justify-between mb-16">
+    <!-- Header Section -->
+    <div class="flex flex-row items-center justify-between mb-8 md:mb-12">
       
       <!-- ซ้าย: โลโก้ และ ชื่อเว็บ -->
-      <div class="flex items-center gap-5">
-         <div id="header-logo-container" class="w-12 h-12 flex items-center justify-center">
-           <div class="w-8 h-8 bg-gray-100 rounded-full animate-pulse"></div>
+      <div class="flex items-center gap-4">
+         <div id="header-logo-container" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center">
+           <div class="w-8 h-8 bg-gray-100 rounded-2xl animate-pulse"></div>
          </div>
          <div id="header-text-container">
-           <h1 class="text-2xl font-medium tracking-wide text-gray-900 mb-1">Blissé Showreel</h1>
-           <p class="text-sm text-gray-400 font-light tracking-wider uppercase">Loading Database...</p>
+           <h1 class="text-xl md:text-2xl font-medium tracking-wide text-gray-900 mb-0.5">Blissé Showreel</h1>
+           <p class="text-[10px] md:text-sm text-gray-400 font-light tracking-wider uppercase">Loading...</p>
          </div>
       </div>
 
-      <!-- ขวา: ปุ่มควบคุม (แบบมินิมอล มีแค่ไอคอน) -->
-      <div class="flex items-center gap-2">
-        <button onclick="shuffleAndRender()" title="สุ่มนำเสนอ" class="w-11 h-11 flex items-center justify-center rounded-full text-gray-500 hover:text-black hover:bg-gray-100 transition-colors">
-          <i class="fa-solid fa-shuffle text-lg"></i>
+      <!-- ขวา: ปุ่มควบคุม -->
+      <div class="flex items-center gap-1 md:gap-2">
+        <button onclick="shuffleAndRender()" title="สุ่มนำเสนอ" class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-2xl text-gray-500 hover:text-black hover:bg-gray-100 transition-colors">
+          <i class="fa-solid fa-shuffle text-base md:text-lg"></i>
         </button>
-        <button onclick="fetchData()" title="รีเฟรชข้อมูล" class="w-11 h-11 flex items-center justify-center rounded-full text-gray-500 hover:text-black hover:bg-gray-100 transition-colors">
-          <i class="fa-solid fa-rotate text-lg"></i>
+        <button onclick="fetchData()" title="รีเฟรชข้อมูล" class="w-10 h-10 md:w-11 md:h-11 flex items-center justify-center rounded-2xl text-gray-500 hover:text-black hover:bg-gray-100 transition-colors">
+          <i class="fa-solid fa-rotate text-base md:text-lg"></i>
         </button>
       </div>
     </div>
 
-    <!-- Container สำหรับใส่การ์ด -->
-    <div id="main-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+    <!-- Container สำหรับใส่การ์ด (มือถือแสดง 2 คอลัมน์) -->
+    <div id="main-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-8">
       <!-- Loading State -->
       <div class="col-span-full flex flex-col items-center justify-center py-32 text-gray-400">
           <div class="loader mb-4"></div>
-          <p class="font-light tracking-wide">กำลังเชื่อมต่อฐานข้อมูล...</p>
+          <p class="font-light tracking-wide text-sm">กำลังเชื่อมต่อฐานข้อมูล...</p>
       </div>
     </div>
 
+  </div>
+
+  <!-- Modal สำหรับกดดูรูปขยาย (ซ่อนไว้เป็นค่าเริ่มต้น) -->
+  <div id="image-modal" class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-black bg-opacity-80 transition-opacity" onclick="closeModal()">
+    <button class="absolute top-6 right-6 md:top-10 md:right-10 text-white text-3xl hover:text-gray-300 w-12 h-12 flex items-center justify-center">&times;</button>
+    <img id="modal-img" src="" class="max-w-[85%] max-h-[85%] rounded-[2rem] shadow-2xl object-contain transition-transform transform scale-95 duration-300">
   </div>
 
   <script>
@@ -80,7 +91,28 @@
 
     let rawData = [];
 
-    // 1. โหลดข้อมูลผ่าน Fetch API (สำหรับ GitHub)
+    // ฟังก์ชันเปิด-ปิด Modal รูปภาพ
+    function openModal(imgSrc) {
+      const modal = document.getElementById('image-modal');
+      const modalImg = document.getElementById('modal-img');
+      modalImg.src = imgSrc;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      // หน่วงเวลาเล็กน้อยเพื่อให้ Transition ทำงาน
+      setTimeout(() => modalImg.classList.replace('scale-95', 'scale-100'), 10);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('image-modal');
+      const modalImg = document.getElementById('modal-img');
+      modalImg.classList.replace('scale-100', 'scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }, 200);
+    }
+
+    // โหลดข้อมูลผ่าน Fetch API
     async function fetchData() {
       const container = document.getElementById('main-container');
       container.style.opacity = '0.5';
@@ -94,24 +126,24 @@
         renderCards(rawData);
       } catch (error) {
         console.error("Error fetching data:", error);
-        container.innerHTML = `<div class="col-span-full text-center py-20 text-red-400">เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาตรวจสอบ API URL</div>`;
+        container.innerHTML = `<div class="col-span-full text-center py-20 text-red-400 text-sm">เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาตรวจสอบ API URL</div>`;
       } finally {
         container.style.opacity = '1';
       }
     }
 
-    // 2. อัปเดตส่วนหัวของเว็บ
+    // อัปเดตส่วนหัวของเว็บ
     function updateHeader(config) {
         if(config.logo) {
-            document.getElementById('header-logo-container').innerHTML = `<img src="${config.logo}" class="w-full h-full object-contain">`;
+            document.getElementById('header-logo-container').innerHTML = `<img src="${config.logo}" class="w-full h-full object-contain rounded-xl">`;
         }
         document.getElementById('header-text-container').innerHTML = `
-            <h1 class="text-2xl font-medium tracking-wide text-gray-900 mb-1">${config.header}</h1>
-            <p class="text-xs text-gray-500 font-light tracking-wider uppercase">${config.subhead}</p>
+            <h1 class="text-xl md:text-2xl font-medium tracking-wide text-gray-900 mb-0.5">${config.header}</h1>
+            <p class="text-[10px] md:text-xs text-gray-500 font-light tracking-wider uppercase">${config.subhead}</p>
         `;
     }
 
-    // 3. ฟังก์ชันวาดการ์ด
+    // ฟังก์ชันวาดการ์ด
     function renderCards(data) {
       const container = document.getElementById('main-container');
       container.innerHTML = '';
@@ -119,35 +151,39 @@
       data.forEach(item => {
         let socialLinksHTML = '';
         
+        // ไอคอนแพลตฟอร์มปรับให้ขอบมนล้อกับการ์ด และแสดงสีสัน
         if(item.p1_platform && item.p1_icon) {
             socialLinksHTML += `
-            <a href="${item.p1_post_url || '#'}" target="_blank" class="w-10 h-10 rounded-xl p-1.5 hover:-translate-y-1 transition-all hover:shadow-md bg-gray-50 border border-transparent hover:border-gray-200 flex items-center justify-center grayscale hover:grayscale-0">
-               <img src="${item.p1_icon}" class="w-full h-full object-contain" title="${item.p1_platform}">
+            <a href="${item.p1_post_url || '#'}" target="_blank" class="w-8 h-8 md:w-10 md:h-10 rounded-[0.75rem] md:rounded-2xl p-1 md:p-1.5 hover:-translate-y-1 transition-all hover:shadow-md bg-gray-50 border border-gray-100 flex items-center justify-center">
+               <img src="${item.p1_icon}" class="w-full h-full object-contain rounded-lg" title="${item.p1_platform}">
             </a>`;
         }
         if(item.p2_platform && item.p2_icon) {
             socialLinksHTML += `
-            <a href="${item.p2_post_url || '#'}" target="_blank" class="w-10 h-10 rounded-xl p-1.5 hover:-translate-y-1 transition-all hover:shadow-md bg-gray-50 border border-transparent hover:border-gray-200 flex items-center justify-center grayscale hover:grayscale-0">
-               <img src="${item.p2_icon}" class="w-full h-full object-contain" title="${item.p2_platform}">
+            <a href="${item.p2_post_url || '#'}" target="_blank" class="w-8 h-8 md:w-10 md:h-10 rounded-[0.75rem] md:rounded-2xl p-1 md:p-1.5 hover:-translate-y-1 transition-all hover:shadow-md bg-gray-50 border border-gray-100 flex items-center justify-center">
+               <img src="${item.p2_icon}" class="w-full h-full object-contain rounded-lg" title="${item.p2_platform}">
             </a>`;
         }
 
         const card = document.createElement('div');
-        card.className = "card-clean bg-white rounded-3xl p-8 flex flex-col items-center relative";
+        // ปรับ Padding การ์ดให้แคบลง (p-4)
+        card.className = "card-clean bg-white rounded-[1.5rem] md:rounded-3xl p-4 md:p-6 flex flex-col items-center relative";
         
         card.innerHTML = `
-          <div class="w-32 h-32 rounded-full overflow-hidden mb-6 border border-gray-100 shadow-sm">
+          <!-- รูปโปรไฟล์ปรับเป็นขอบมน (rounded-2xl) และคลิกได้ -->
+          <div class="w-20 h-20 md:w-28 md:h-28 rounded-2xl md:rounded-[1.5rem] overflow-hidden mb-3 md:mb-4 border border-gray-100 shadow-sm cursor-pointer hover:opacity-90 transition-opacity" onclick="openModal('${item.profile_url}')">
             <img src="${item.profile_url}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${item.nickname}&background=fafafa&color=171717'">
           </div>
 
-          <h2 class="text-xl font-medium text-gray-900 mb-2">${item.nickname}</h2>
+          <!-- บีบระยะห่าง (Margin Bottom) ให้กระชับขึ้น -->
+          <h2 class="text-base md:text-xl font-medium text-gray-900 mb-0.5 md:mb-1">${item.nickname}</h2>
           
-          <a href="https://www.tiktok.com/@${item.tiktok_user}" target="_blank" class="flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors mb-8 group">
-            <i class="fa-brands fa-tiktok text-sm"></i> 
-            <span class="font-light text-sm tracking-wide group-hover:underline underline-offset-4">@${item.tiktok_user}</span>
+          <a href="https://www.tiktok.com/@${item.tiktok_user}" target="_blank" class="flex items-center gap-1.5 text-gray-400 hover:text-gray-900 transition-colors mb-4 md:mb-5 group">
+            <i class="fa-brands fa-tiktok text-[10px] md:text-sm"></i> 
+            <span class="font-light text-[11px] md:text-sm tracking-wide group-hover:underline underline-offset-4 truncate max-w-[100px] md:max-w-[150px]">@${item.tiktok_user}</span>
           </a>
 
-          <div class="flex gap-3 min-h-[2.5rem]">
+          <div class="flex gap-2 md:gap-3 min-h-[2rem]">
              ${socialLinksHTML}
           </div>
         `;
@@ -155,7 +191,7 @@
       });
     }
 
-    // 4. ฟังก์ชันสุ่มการ์ด
+    // ฟังก์ชันสุ่มการ์ด
     function shuffleAndRender() {
       let shuffled = [...rawData];
       for (let i = shuffled.length - 1; i > 0; i--) {
