@@ -580,6 +580,7 @@ const STATUS_COLORS = {
   'อนุมัติแล้ว':  { bg:'#dbeafe', fg:'#1e40af' },
   'เข้าคิวจ่าย':  { bg:'#ede9fe', fg:'#5b21b6' },
   'จ่ายเงินแล้ว': { bg:'#dcfce7', fg:'#15803d' },
+  'รอแก้ไขงาน':  { bg:'#fff7ed', fg:'#c2410c' },
   'ตีกลับ':       { bg:'#fee2e2', fg:'#b91c1c' }
 };
 function statusBadge(val) {
@@ -1296,6 +1297,7 @@ function renderStatusOverview(counts) {
     { s:'อนุมัติแล้ว',  icon:'<i class="fa-solid fa-circle-check"></i>' },
     { s:'เข้าคิวจ่าย',  icon:'<i class="fa-solid fa-clock"></i>' },
     { s:'จ่ายเงินแล้ว', icon:'<i class="fa-solid fa-money-bill-transfer"></i>' },
+    { s:'รอแก้ไขงาน',  icon:'<i class="fa-solid fa-screwdriver-wrench"></i>' },
     { s:'ตีกลับ',       icon:'<i class="fa-solid fa-rotate-left"></i>' }
   ];
   let html = '';
