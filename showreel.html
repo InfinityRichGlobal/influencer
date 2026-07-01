@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blissé Influencer Showreel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Prompt', sans-serif; 
+      background-color: #ffffff; 
+      color: #171717;
+    }
+    .card-clean { 
+      transition: all 0.4s ease; 
+      border: 1px solid #f0f0f0;
+    }
+    .card-clean:hover { 
+      transform: translateY(-4px); 
+      box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.05); 
+      border-color: #e5e5e5;
+    }
+    .loader {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #171717;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<!-- เพิ่ม Padding ให้หน้าเว็บ (px-8 md:px-20 py-12 md:py-16) -->
+<body class="px-8 md:px-20 py-12 md:py-16 min-h-screen flex flex-col">
+
+  <div class="w-full max-w-[1600px] mx-auto">
+    
+    <!-- Header Section: จัดให้อยู่บรรทัดเดียวกัน ซ้าย-ขวา ชัดเจน -->
+    <div class="flex items-center justify-between mb-16">
+      
+      <!-- ซ้าย: โลโก้ และ ชื่อเว็บ -->
+      <div class="flex items-center gap-5">
+         <div id="header-logo-container" class="w-12 h-12 flex items-center justify-center">
+           <div class="w-8 h-8 bg-gray-100 rounded-full animate-pulse"></div>
+         </div>
+         <div id="header-text-container">
+           <h1 class="text-2xl font-medium tracking-wide text-gray-900 mb-1">Blissé Showreel</h1>
+           <p class="text-sm text-gray-400 font-light tracking-wider uppercase">Loading Database...</p>
+         </div>
+      </div>
+
+      <!-- ขวา: ปุ่มควบคุม (แบบมินิมอล มีแค่ไอคอน) -->
+      <div class="flex items-center gap-2">
+        <button onclick="shuffleAndRender()" title="สุ่มนำเสนอ" class="w-11 h-11 flex items-center justify-center rounded-full text-gray-500 hover:text-black hover:bg-gray-100 transition-colors">
+          <i class="fa-solid fa-shuffle text-lg"></i>
+        </button>
+        <button onclick="fetchData()" title="รีเฟรชข้อมูล" class="w-11 h-11 flex items-center justify-center rounded-full text-gray-500 hover:text-black hover:bg-gray-100 transition-colors">
+          <i class="fa-solid fa-rotate text-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Container สำหรับใส่การ์ด -->
+    <div id="main-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+      <!-- Loading State -->
+      <div class="col-span-full flex flex-col items-center justify-center py-32 text-gray-400">
+          <div class="loader mb-4"></div>
+          <p class="font-light tracking-wide">กำลังเชื่อมต่อฐานข้อมูล...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ⚠️ นำ Web App URL ที่เพิ่ง Deploy ใหม่มาวางตรงนี้ ⚠️
+    const API_URL = "https://script.google.com/macros/s/AKfycbxs7Gi-p_OR6q9EroQpP-7fWknIxSOeBoe-Yyq_bL2Z8KsdrvGdMAYmyNoqclIp9huJ/exec"; 
+
+    let rawData = [];
+
+    // 1. โหลดข้อมูลผ่าน Fetch API (สำหรับ GitHub)
+    async function fetchData() {
+      const container = document.getElementById('main-container');
+      container.style.opacity = '0.5';
+
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        
+        updateHeader(data.config);
+        rawData = data.influencers;
+        renderCards(rawData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        container.innerHTML = `<div class="col-span-full text-center py-20 text-red-400">เกิดข้อผิดพลาดในการโหลดข้อมูล กรุณาตรวจสอบ API URL</div>`;
+      } finally {
+        container.style.opacity = '1';
+      }
+    }
+
+    // 2. อัปเดตส่วนหัวของเว็บ
+    function updateHeader(config) {
+        if(config.logo) {
+            document.getElementById('header-logo-container').innerHTML = `<img src="${config.logo}" class="w-full h-full object-contain">`;
+        }
+        document.getElementById('header-text-container').innerHTML = `
+            <h1 class="text-2xl font-medium tracking-wide text-gray-900 mb-1">${config.header}</h1>
+            <p class="text-xs text-gray-500 font-light tracking-wider uppercase">${config.subhead}</p>
+        `;
+    }
+
+    // 3. ฟังก์ชันวาดการ์ด
+    function renderCards(data) {
+      const container = document.getElementById('main-container');
+      container.innerHTML = '';
+
+      data.forEach(item => {
+        let socialLinksHTML = '';
+        
+        if(item.p1_platform && item.p1_icon) {
+            socialLinksHTML += `
+            <a href="${item.p1_post_url || '#'}" target="_blank" class="w-10 h-10 rounded-xl p-1.5 hover:-translate-y-1 transition-all hover:shadow-md bg-gray-50 border border-transparent hover:border-gray-200 flex items-center justify-center grayscale hover:grayscale-0">
+               <img src="${item.p1_icon}" class="w-full h-full object-contain" title="${item.p1_platform}">
+            </a>`;
+        }
+        if(item.p2_platform && item.p2_icon) {
+            socialLinksHTML += `
+            <a href="${item.p2_post_url || '#'}" target="_blank" class="w-10 h-10 rounded-xl p-1.5 hover:-translate-y-1 transition-all hover:shadow-md bg-gray-50 border border-transparent hover:border-gray-200 flex items-center justify-center grayscale hover:grayscale-0">
+               <img src="${item.p2_icon}" class="w-full h-full object-contain" title="${item.p2_platform}">
+            </a>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = "card-clean bg-white rounded-3xl p-8 flex flex-col items-center relative";
+        
+        card.innerHTML = `
+          <div class="w-32 h-32 rounded-full overflow-hidden mb-6 border border-gray-100 shadow-sm">
+            <img src="${item.profile_url}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${item.nickname}&background=fafafa&color=171717'">
+          </div>
+
+          <h2 class="text-xl font-medium text-gray-900 mb-2">${item.nickname}</h2>
+          
+          <a href="https://www.tiktok.com/@${item.tiktok_user}" target="_blank" class="flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors mb-8 group">
+            <i class="fa-brands fa-tiktok text-sm"></i> 
+            <span class="font-light text-sm tracking-wide group-hover:underline underline-offset-4">@${item.tiktok_user}</span>
+          </a>
+
+          <div class="flex gap-3 min-h-[2.5rem]">
+             ${socialLinksHTML}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 4. ฟังก์ชันสุ่มการ์ด
+    function shuffleAndRender() {
+      let shuffled = [...rawData];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      
+      const container = document.getElementById('main-container');
+      container.style.opacity = '0';
+      setTimeout(() => {
+        renderCards(shuffled);
+        container.style.opacity = '1';
+        container.style.transition = 'opacity 0.4s ease';
+      }, 200);
+    }
+
+    window.onload = fetchData;
+  </script>
+</body>
+</html>
