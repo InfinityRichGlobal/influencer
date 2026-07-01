@@ -806,7 +806,7 @@ async function openEditModal(rowIndex, mode) {
     EDIT_TARGET_LINEID = row._lineId;
     CURRENT_MODAL_ROW = row; // เก็บไว้ให้ปุ่มส่งข้อความใช้ต่อ
 
-    el('pm-avatar').src = row._photo || row.line_profile_drive_url || '';
+    el('pm-avatar').src = row.line_profile_drive_url || row._photo || '';
 
     // ชื่อ — กดแล้วไปยัง TikTok ได้ (เหมือนในตาราง)
     const nameText = row.nickname || row.line_name || '—';
@@ -1151,7 +1151,7 @@ function openLineModal(rowIndex, rowData) {
   if (!row) return;
   LINE_TARGET_LINEID = row._lineId || row.lineId;
 
-  el('lm-avatar').src = row._photo || row.photo || row.line_profile_drive_url || '';
+  el('lm-avatar').src = row.line_profile_drive_url || row._photo || row.photo || '';
   el('lm-name').textContent = row.nickname || row.line_name || row.lineName || '—';
   const shareBtn = el('lm-share-btn');
   // รองรับทั้ง _shareUrl (จาก bk_list) และ share_url (จาก bk_getRow)
