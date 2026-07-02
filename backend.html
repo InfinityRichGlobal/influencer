@@ -941,8 +941,17 @@ async function openEditModal(rowIndex, mode) {
             <div class="img-gallery"><img src="${val}" onclick="openLightbox('${val}', event)"/></div></div>`;
         }
       } else {
-        html += `<div class="pf-field"><label>${c.label}${c.editable?'':' <i class="fa-solid fa-lock" style="font-size:10px"></i>'}</label>
-          <input type="text" data-key="${c.key}" data-type="text" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable?'':'disabled'}/></div>`;
+        // bank_account — เพิ่มปุ่ม copy ข้างๆ
+        if (c.key === 'bank_account' && val) {
+          html += `<div class="pf-field"><label>${c.label}${c.editable?'':' <i class="fa-solid fa-lock" style="font-size:10px"></i>'}</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="text" data-key="${c.key}" data-type="text" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable?'':'disabled'} style="flex:1"/>
+              <button type="button" onclick="copyToClipboard('${String(val).replace(/'/g,"\\'")}', event)" style="flex-shrink:0;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:10px 12px;cursor:pointer;color:#16a34a;font-size:14px" title="คัดลอกเลขบัญชี"><i class="fa-regular fa-copy"></i></button>
+            </div></div>`;
+        } else {
+          html += `<div class="pf-field"><label>${c.label}${c.editable?'':' <i class="fa-solid fa-lock" style="font-size:10px"></i>'}</label>
+            <input type="text" data-key="${c.key}" data-type="text" value="${String(val).replace(/"/g,'&quot;')}" ${c.editable?'':'disabled'}/></div>`;
+        }
       }
     });
     el('pm-fields').innerHTML = html;
