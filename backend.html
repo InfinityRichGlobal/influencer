@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Blissé Influencer Dashboard</title>
+<title>• Blissé Influencer Dashboard •</title>
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -1360,7 +1360,7 @@ function renderFinance() {
       <td>${tiktokLink}</td>
       <td>${docCell}</td>
       <td>${escapeHtml(r.bankName||'—')}</td>
-      <td>${escapeHtml(String(r.bankAccount||'—'))}</td>
+      <td>${r.bankAccount ? `<span onclick="copyToClipboard('${String(r.bankAccount).replace(/'/g,"\\'")}', event)" style="cursor:pointer;color:#16a34a;margin-right:4px" title="คัดลอกเลขบัญชี"><i class="fa-regular fa-copy"></i></span>${escapeHtml(String(r.bankAccount))}` : '—'}</td>
       <td>${escapeHtml(r.accountName||'—')}</td>
       <td>${escapeHtml(String(r.amount||'—'))}</td>
       <td>${r.slipUrl ? `<img class="row-thumb" src="${r.slipUrl}" onclick="openLightbox('${r.slipUrl}', event)"/>` : '—'}</td>
